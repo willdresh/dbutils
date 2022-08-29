@@ -1,0 +1,5 @@
+DBInterface/bin
+DBInterface/obj
+packages/
+
+.vs/
