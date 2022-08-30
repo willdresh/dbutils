@@ -41,10 +41,10 @@ namespace DBInterface
 
         public override bool Equals(object obj)
         {
-            return ReferenceEquals(obj, this) || // Short-circuit if reference-equal
-                  Equals(obj as Lookup);
+            return ReferenceEquals(obj, this) // Short-circuit if reference-equal
+                  || Equals(obj as Lookup);
         }
-
+        
         public override int GetHashCode()
         {
             int result = Hashcode_XOR_Operand;

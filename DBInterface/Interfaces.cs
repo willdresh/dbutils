@@ -10,7 +10,11 @@ namespace DBInterface
     public interface IMutableLookup<T>: ILookup
         where T : class, ILookup
     {
-        T AsImmutable();
+        /// <summary>
+        /// Get an immutable copy of this mutable object
+        /// </summary>
+        /// <returns>A newly-constructed immutable copy of <c>this</c>.</returns>
+        T ImmutableCopy();
     }
 
     public interface IMutableLookup: IMutableLookup<ILookup> { }

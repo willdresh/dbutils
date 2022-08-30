@@ -13,13 +13,17 @@ namespace DBInterface
     {
         private static readonly string DBIMessage = "DBInterface Exception";
         internal DBInterfaceApplicationException()
-            : base(DBIMessage) { }
+            :base(DBIMessage) { }
 
         internal DBInterfaceApplicationException(string message)
-            : base(GenerateMessage(message)) { }
+            :base(GenerateMessage(message)) { }
 
         internal DBInterfaceApplicationException(string message, Exception innerException)
-            : base(GenerateMessage(message), innerException) { }
+            :base(GenerateMessage(message), innerException) { }
+
+        internal DBInterfaceApplicationException(System.Runtime.Serialization.SerializationInfo info,
+                System.Runtime.Serialization.StreamingContext context)
+            :base(info, context) { }
 
         private static string GenerateMessage(string msg)
         {
@@ -49,22 +53,21 @@ namespace DBInterface
         }
     }
 
-    public sealed class PolicyProhibitsAutoConnectException: DataUnreachableException
+    public class SecurityException: OperationNotPermittedException
     {
-        private static readonly string DefaultMessage = "Connection policy prohibits auto-connect";
+        private static readonly string SecurityMessage = "Application security violation";
+        internal SecurityException()
+            : base(SecurityMessage) { }
 
-        internal PolicyProhibitsAutoConnectException()
-            : base(DefaultMessage) { }
-
-        internal PolicyProhibitsAutoConnectException(string message)
+        internal SecurityException(string message)
             : base(GenerateMessage(message)) { }
 
-        internal PolicyProhibitsAutoConnectException(string message, Exception innerException)
+        internal SecurityException(string message, Exception innerException)
             : base(GenerateMessage(message), innerException) { }
 
         private static string GenerateMessage(string msg)
         {
-            return String.Format("{0}: {1}", DefaultMessage, msg);
+            return String.Format("{0}: {1}", SecurityMessage, msg);
         }
     }
 
@@ -72,7 +75,7 @@ namespace DBInterface
     /// Data unreachable exception. Cannot be externally inherited, as it has
     /// no public constructor.
     /// </summary>
-    public class DataUnreachableException : ApplicationException
+    public class DataUnreachableException : DBInterfaceApplicationException
     {
         private static readonly string DefaultMessage = "Data Unreachable";
         internal DataUnreachableException()
@@ -92,4 +95,28 @@ namespace DBInterface
             return string.Format("{0}: {1}", DefaultMessage, msg);
         }
     }
+
+    /// <summary>
+    /// Policy prohibits auto connect exception. Cannot be externally inherited, as it has
+    /// no public constructor.
+    /// </summary>
+    public class PolicyProhibitsAutoConnectException: DataUnreachableException
+    {
+        private static readonly string DefaultMessage = "Connection policy prohibits auto-connect";
+
+        internal PolicyProhibitsAutoConnectException()
+            : base(DefaultMessage) { }
+
+        internal PolicyProhibitsAutoConnectException(string message)
+            : base(GenerateMessage(message)) { }
+
+        internal PolicyProhibitsAutoConnectException(string message, Exception innerException)
+            : base(GenerateMessage(message), innerException) { }
+
+        private static string GenerateMessage(string msg)
+        {
+            return String.Format("{0}: {1}", DefaultMessage, msg);
+        }
+    }
+
 }
