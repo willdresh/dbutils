@@ -62,7 +62,7 @@ namespace DBInterface
         internal PolicyProhibitsAutoConnectException(string message, Exception innerException)
             : base(GenerateMessage(message), innerException) { }
 
-        protected static string GenerateMessage(string msg)
+        private static string GenerateMessage(string msg)
         {
             return String.Format("{0}: {1}", DefaultMessage, msg);
         }

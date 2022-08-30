@@ -44,6 +44,12 @@ namespace DBInterface
             Policy = DEFAULT_Policy;
         }
 
+        /// <summary>
+        /// Does the lookup.
+        /// </summary>
+        /// <returns>The lookup.</returns>
+        /// <param name="query">Query (LookupManager guarantees that the runtime type of <c>query</c>
+        ///  will be immutable</param>
         protected abstract ILookupResult DoLookup(ILookup query);
 
         public virtual bool LookupAllowed { get => Policy.HasFlag(LookupPolicy.ALLOW_LOOKUP); }
@@ -57,7 +63,12 @@ namespace DBInterface
         public ILookupResult Lookup(ILookup query)
         {
             if (LookupAllowed)
-                return DoLookup(query);
+            {
+                if (query is IMutableLookup mutable)
+                    return DoLookup(mutable.AsImmutable());
+                else
+                    return DoLookup(query);
+            }
             else throw new LookupNotPermittedException();
         }
     }

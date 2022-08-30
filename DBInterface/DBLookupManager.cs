@@ -6,7 +6,7 @@ using System.Data;
 
 namespace DBInterface
 {
-    public class DBLookupManager: LookupManager, ILookupProvider
+    public class DBLookupManager: LookupManager
     {
         [Flags]
         public enum DBConnectionPolicy

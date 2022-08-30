@@ -11,7 +11,7 @@ namespace DBInterface.Cache
         public class IllegalCacheOperationException : ApplicationException
         { }
 
-        public sealed class CacheFunctionProvider
+        public sealed class CacheFunctionProvider: ILookupProvider
         {
             public sealed class NullKeyException : IllegalCacheOperationException
             { }
@@ -101,5 +101,10 @@ namespace DBInterface.Cache
                 ValidateParams(key);
                 cacheManager.Put(key, value);
             }
+
+        public ILookupResult Lookup(ILookup query)
+        {
+            return CacheLookup(query);
         }
     }
+}

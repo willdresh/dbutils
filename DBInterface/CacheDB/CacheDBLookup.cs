@@ -9,11 +9,13 @@ namespace DBInterface.CacheDB
 {
     public enum DataSource { CACHE, DATABASE, NONE }
 
-    public interface ICacheDBLookup : ILookup
+    public interface ICacheDBLookup: ILookup
     {
         bool BypassCache { get; }
         bool DontCacheResult { get; }
     }
+
+    public interface IMutableCacheDBLookup: ICacheDBLookup, IMutableLookup<ICacheDBLookup> { }
 
     public interface ICacheDBLookupResult: ILookupResult<ICacheDBLookup>
     {
@@ -47,12 +49,12 @@ namespace DBInterface.CacheDB
         public bool BypassCache { get; internal set; }
         public bool DontCacheResult { get; internal set; }
 
-        internal static CacheDBLookup Build_Internal(ILookup query, CacheDBLookupManager mgr, bool bypassCache = false, bool dontCacheResult = false)
+        internal static CacheDBLookup Build_Internal(ILookup query, DBLookupManager mgr, bool bypassCache = false, bool dontCacheResult = false)
         {
             return new CacheDBLookup(query.Key, mgr.connection, bypassCache, dontCacheResult);
         }
 
-        public static ICacheDBLookup Build(ILookup query, CacheDBLookupManager mgr, bool bypassCache = false, bool dontCacheResult = false)
+        public static ICacheDBLookup Build(ILookup query, DBLookupManager mgr, bool bypassCache = false, bool dontCacheResult = false)
         {
             return Build_Internal(query, mgr, bypassCache, dontCacheResult);
         }
@@ -80,7 +82,7 @@ namespace DBInterface.CacheDB
         }
     }
 
-    public sealed class MutableCacheDBLookup: ICacheDBLookup, IMutableLookup<ICacheDBLookup>
+    public sealed class MutableCacheDBLookup: ICacheDBLookup, IMutableCacheDBLookup
     {
         private CacheDBLookup cdlu;
 
@@ -109,7 +111,7 @@ namespace DBInterface.CacheDB
             return new MutableCacheDBLookup(lu, manager, bypassCache, dontCacheResult);
         }
 
-        public static IMutableLookup<ICacheDBLookup> Build(ILookup lu, CacheDBLookupManager manager, bool bypassCache = false, bool dontCacheResult = false)
+        public static IMutableCacheDBLookup Build(ILookup lu, CacheDBLookupManager manager, bool bypassCache = false, bool dontCacheResult = false)
         {
             return Build_Internal(lu, manager, bypassCache, dontCacheResult);
         }
@@ -125,23 +127,30 @@ namespace DBInterface.CacheDB
         }
     }
 
-    internal class CacheDBLookupResult: LookupResult, ILookupResult<CacheDBLookup>
+    internal class CacheDBLookupResult: LookupResult, ICacheDBLookupResult
     {
-        internal CacheDBLookupResult(CacheDBLookup query, object response, DataSource src)
+        internal CacheDBLookupResult(ICacheDBLookup query, object response, DataSource src)
             : base(query, response)
         {
             ActualSource = src;
         }
 
-        internal DataSource ActualSource { get; }
-        public new CacheDBLookup Query { get { return base.Query as CacheDBLookup; } }
+        public DataSource ActualSource { get; }
+        public new ICacheDBLookup Query { get; }
 
-        internal static CacheDBLookupResult Build(ILookupResult<DBLookup> result, DataSource src)
+        internal static CacheDBLookupResult Build_Internal(ILookupResult<ICacheDBLookup> result, CacheDBLookupManager mgr, DataSource src)
         {
-            CacheDBLookup query = result.Query as CacheDBLookup;
-            if (query == null)
-                query = CacheDBLookup.Build(result.Query) as CacheDBLookup;
-            return new CacheDBLookupResult(query, result.Response, src);
+            return new CacheDBLookupResult(result.Query, result.Response, src);
+        }
+
+        internal static CacheDBLookupResult Build_Internal(DBLookupResult result, CacheDBLookupManager mgr, DataSource src)
+        {
+            return new CacheDBLookupResult(CacheDBLookup.Build_Internal(result.Query, mgr), result.Response, src);
+        }
+
+        public static ICacheDBLookupResult Build(ILookupResult<ICacheDBLookup> result, CacheDBLookupManager mgr, DataSource src)
+        {
+            return Build_Internal(result, mgr, src);
         }
     }
 }
