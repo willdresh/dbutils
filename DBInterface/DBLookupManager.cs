@@ -6,7 +6,7 @@ using System.Data;
 
 namespace DBInterface
 {
-    public class DBLookupManager: ILookupProvider<DBLookup>, ILookupProvider
+    public class DBLookupManager: LookupManager, ILookupProvider
     {
         [Flags]
         public enum DBConnectionPolicy
@@ -61,7 +61,7 @@ namespace DBInterface
             return new DBLookup(query.Key, connection);
         }
 
-        internal virtual DBLookupResult DatabaseLookup(DBLookup query)
+        internal DBLookupResult DatabaseLookup(DBLookup query)
         {
             // FIRST: ready our database connection
             bool finallyCloseConnection = ConnectionPolicy.HasFlag(DBConnectionPolicy.AUTO_DISCONNECT_ALL);
@@ -79,23 +79,29 @@ namespace DBInterface
             DBLookupResult result;
             try
             {
-                result = new DBLookupResult(query, dblp.Lookup(query).Response);
+                //TODO
+                // this could use improvement
+
+                if (dblp is DBLookupProvider provider)
+                    result = provider.Lookup_Internal(query);
+                else
+                    result = new DBLookupResult(query, dblp.Lookup(query).Response);
             }
             finally { if (finallyCloseConnection) ExecuteAutoDisconnect(); }
 
             return result;
         }
 
-        public ILookupResult Lookup(DBLookup query)
+        internal DBLookupResult Lookup_Internal(DBLookup query)
         {
             if (query == null) throw new ArgumentNullException(nameof(query));
             return DatabaseLookup(query);
         }
 
-        public ILookupResult Lookup(ILookup query)
+        protected override ILookupResult DoLookup(ILookup query)
         {
             if (query == null) throw new ArgumentNullException(nameof(query));
-            return Lookup(BuildLookup(query));
+            return Lookup_Internal(BuildLookup(query));
         }
     }
 }

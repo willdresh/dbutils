@@ -24,7 +24,7 @@ namespace DBInterface.CacheDB
     /// Cache-DB Lookup. This class cannot be externally inherited, as it has no
     /// public constructors.
     /// </summary>
-    public class CacheDBLookup: DBLookup, ICacheDBLookup, IEquatable<CacheDBLookup>
+    internal class CacheDBLookup: DBLookup, ICacheDBLookup, IEquatable<CacheDBLookup>
     {
         private const int Hashcode_Operand = 20;
         private const int Hashcode_XOR_Operand_BypassCache = 4;
@@ -47,11 +47,6 @@ namespace DBInterface.CacheDB
         public bool BypassCache { get; internal set; }
         public bool DontCacheResult { get; internal set; }
 
-        internal static MutableCacheDBLookup Build_Internal(DBLookup query, bool bypassCache = false, bool dontCacheResult = false)
-        {
-            return new MutableCacheDBLookup(query.Key, query.DBConnection, bypassCache, dontCacheResult);
-        }
-
         internal static CacheDBLookup Build_Internal(ILookup query, CacheDBLookupManager mgr, bool bypassCache = false, bool dontCacheResult = false)
         {
             return new CacheDBLookup(query.Key, mgr.connection, bypassCache, dontCacheResult);
@@ -60,11 +55,6 @@ namespace DBInterface.CacheDB
         public static ICacheDBLookup Build(ILookup query, CacheDBLookupManager mgr, bool bypassCache = false, bool dontCacheResult = false)
         {
             return Build_Internal(query, mgr, bypassCache, dontCacheResult);
-        }
-
-        public static IMutableLookup<ICacheDBLookup> Build(DBLookup query, bool bypassCache = false, bool dontCacheResult = false)
-        {
-            return Build_Internal(query, bypassCache, dontCacheResult);
         }
 
         public bool Equals(CacheDBLookup other)
@@ -109,9 +99,19 @@ namespace DBInterface.CacheDB
         internal IDbConnection DBConnection { get => cdlu.DBConnection; }
         public string Key { get => cdlu.Key; set => cdlu.Key = value; }
 
-        public static IMutableLookup<ICacheDBLookup> Build(ILookup lu, CacheDBLookupManager manager, bool bypassCache = false, bool dontCacheResult = false)
+        internal static MutableCacheDBLookup Build_Internal(DBLookup query, bool bypassCache = false, bool dontCacheResult = false)
+        {
+            return new MutableCacheDBLookup(query.Key, query.DBConnection, bypassCache, dontCacheResult);
+        }
+
+        internal static MutableCacheDBLookup Build_Internal(ILookup lu, CacheDBLookupManager manager, bool bypassCache = false, bool dontCacheResult = false)
         {
             return new MutableCacheDBLookup(lu, manager, bypassCache, dontCacheResult);
+        }
+
+        public static IMutableLookup<ICacheDBLookup> Build(ILookup lu, CacheDBLookupManager manager, bool bypassCache = false, bool dontCacheResult = false)
+        {
+            return Build_Internal(lu, manager, bypassCache, dontCacheResult);
         }
 
         internal CacheDBLookup AsImmutable_Internal()

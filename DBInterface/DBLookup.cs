@@ -12,7 +12,7 @@ namespace DBInterface
     /// DB Lookup. This class cannot be externally inherited, as it has no
     /// public constructors.
     /// </summary>
-    public class DBLookup: Lookup, IEquatable<DBLookup>
+    internal class DBLookup: Lookup, IEquatable<DBLookup>
     {
         private const int Hashcode_XOR_Operand = 2;
 

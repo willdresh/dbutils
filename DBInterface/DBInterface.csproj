@@ -53,6 +53,7 @@
     <Compile Include="CacheDB\CacheDBLookup.cs" />
     <Compile Include="CacheDB\CacheDBLookupManager.cs" />
     <Compile Include="DBLookupProvider.cs" />
+    <Compile Include="LookupManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

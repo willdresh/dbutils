@@ -5,9 +5,11 @@ using System.Data;
 
 namespace DBInterface
 {
-    public sealed class DBLookupProvider : ILookupProvider<DBLookup>
+    internal sealed class DBLookupProvider: ILookupProvider<DBLookup>
     {
-        public ILookupResult Lookup(DBLookup query)
+        internal DBLookupProvider() { }
+
+        internal DBLookupResult Lookup_Internal(DBLookup query)
         {
             var connection = query.DBConnection;
             IDbTransaction xaction = connection.BeginTransaction();
@@ -19,6 +21,11 @@ namespace DBInterface
             result.Load(reader);
 
             return new DBLookupResult(query, result);
+        }
+
+        public ILookupResult Lookup(DBLookup query)
+        {
+            return Lookup_Internal(query);
         }
     }
 }

@@ -24,12 +24,12 @@ namespace DBInterface
 
     public interface ILookupResult: ILookupResult<ILookup> { }
 
-    public interface ILookupProvider<T>
+    internal interface ILookupProvider<T>
         where T: ILookup
     {
         ILookupResult Lookup(T query);
     }
 
-    public interface ILookupProvider: ILookupProvider<ILookup> {  }
+    internal interface ILookupProvider: ILookupProvider<ILookup> {  }
 
 }
