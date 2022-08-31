@@ -338,7 +338,6 @@ namespace DBInterface.CacheDB
 
             return true;
         }
-
         /// <summary>
         /// Gets the failure instance.
         /// </summary>
