@@ -9,7 +9,7 @@ namespace DBInterface
     /// Lookup Manager. This class cannot be externally inherited, as it has no
     /// public constructors.
     /// </summary>
-    public abstract class LookupManager: ILookupProvider
+    public abstract class LookupManager: ILookupProvider<ILookup>
     {
         /// <summary>
         /// Custom type failed verification exception. This class cannot be inherited.
@@ -65,26 +65,33 @@ namespace DBInterface
         /// <returns>The result of the lookup operation.</returns>
         /// <param name="query">Query (Precondition: the runtime type of <c>query</c>
         ///  is immutable - i.e. implements ILookup AND DOES NOT implement IMutableLookup)</param>
-        protected abstract ILookupResult DoLookup(ILookup query);
+        protected abstract ILookupResult<ILookup> DoLookup(ILookup query);
 
         public bool LookupAllowed { get => Policy.HasFlag(LookupPolicy.ALLOW_LOOKUP); }
 
         /// <exception cref="CustomTypeFailedVerificationException"><c>query</c> is of externally-defined type, and did not pass internal verification.</exception>
-        private ILookupResult DoLookup_Private(ILookup query)
+        private ILookupResult<ILookup> DoLookup_Private(ILookup query)
         {
+            ILookup immutableQuery = query;
             if (query is IMutableLookup mutable) // Behavior of likely-external origin
-            { 
-                // Verification Triggered
-                if (VerifyInstance(mutable, out External_IMutableLookup_VerificationFlags flags))
-                {
-                    ILookup immutable = mutable.ImmutableCopy();
-                    return DoLookup(immutable);
-                }
+            {
+                ILookup immutable = null;
+                External_IMutableLookup_VerificationFlags flags = 0;
+                if (mutable is CacheDB.MutableCacheDBLookup int_mutablecdb)
+                    immutable = int_mutablecdb.Unwrap_Immutable;
+                else if (mutable is MutableDBLookup int_mutabledb)
+                    immutable = int_mutabledb.Unwrap_Immutable;
+                else if (mutable is MutableLookup int_mutable)
+                    immutable = int_mutable.Unwrap_Immutable;
+                else if (VerifyInstance(mutable, out flags))
+                    immutable = mutable.ImmutableCopy();
+                else
+                    throw new CustomTypeFailedVerificationException(flags);
 
-                throw new CustomTypeFailedVerificationException(flags);
+                immutableQuery = immutable;
             }
-            else
-                return DoLookup(query);
+
+            return DoLookup(immutableQuery);
         }
 
         /// <summary>
@@ -101,7 +108,7 @@ namespace DBInterface
         /// and it is this immutable copy - NOT the original - that will be processed by the base class override of
         /// <see cref="LookupManager.DoLookup(ILookup)"/>
         /// </remarks>
-        public ILookupResult Lookup(ILookup query)
+        public ILookupResult<ILookup> Lookup(ILookup query)
         {
             if (query == null)
                 throw new ArgumentNullException(nameof(query));

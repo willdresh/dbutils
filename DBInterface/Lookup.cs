@@ -14,26 +14,26 @@ namespace DBInterface
     {
         private const int Hashcode_XOR_Operand = 17;
 
-	private string key;
+	    private string key;
 
         internal Lookup(string _key)
         {
-            key = _key == null ? null : String.Copy(_key);
+            KeyCopy = _key;
         }
 
         internal Lookup(MutableLookup lu)
         {
-            key = lu.Key_Internal ?? null;
+            KeyCopy = lu.Unwrap_Immutable.Key_Internal;
         }
 
-	internal string Key_Internal { get { return key; } }
+	    internal string Key_Internal { get { return key; } set { key = value; } }
 
         /// <summary>
-        /// Gets a copy of the lookup key. Direct references to the
-	/// lookup key itself cannot be obtained.
+        /// Gets a copy of the lookup key, or returns null. Direct references to the
+	    /// lookup key itself cannot be obtained.
         /// </summary>
         public string KeyCopy { get { return (key == null ? null : String.Copy(key)); } 
-	       	internal set { key = String.Copy(value); } }
+	       	internal set { key = value == null ? null : String.Copy(value); } }
 
         /// <summary>
         /// Implements deep value-equality between Lookup objects
@@ -51,14 +51,17 @@ namespace DBInterface
 	    // then we can avoid unnecessary key copying operations by using the internally-accessible
 	    // properties Unwrap_Immutable and Key_Internal.
 	    if (other is Lookup int_lu) 
-		otherKey = int_lu.Key_Internal;
+		    otherKey = int_lu.Key_Internal;
 	    else if (other is MutableLookup mu) 
-		otherKey = mu.Unwrap_Immutable.Key_Internal;
-	    else otherKey = other.KeyCopy;
-	    // If we cannot infer a concrete type, then we'll have to use KeyCopy in order to compare keys.
+		    otherKey = mu.Unwrap_Immutable.Key_Internal;
+	    else otherKey = other.KeyCopy; // If we cannot infer a concrete type, then we'll have to use KeyCopy in order to compare keys.
 
-            if (Key_Internal == null) return otherKey == null;
+            // If at least one is null, then return "are they both null?"
+            if (Key_Internal == null || otherKey == null)
+                return (Key_Internal == null) && (otherKey == null);
 
+            // If neither is null, then compare equality
+            return Key_Internal.Equals(otherKey);
         }
 
         public override bool Equals(object obj)
@@ -84,7 +87,7 @@ namespace DBInterface
     /// This class cannot be externally inherited, as it has no
     /// public constructor.
     /// </remarks>
-    public class MutableLookup: IMutableLookup
+    public class MutableLookup: ILookup, IMutableLookup
     {
         internal sealed class MutableLookup_BugDetectedException: ArgumentNullException
         {
@@ -104,10 +107,10 @@ namespace DBInterface
 
         internal MutableLookup(string key = null)
         {
-		lu = new Lookup(this);
-	}
+            lu = new Lookup(key);
+	    }
 
-	internal Lookup Unwrap_Immutable { get { return lu; } }
+	    internal Lookup Unwrap_Immutable { get { return lu; } }
 
         public string KeyCopy
         {
@@ -154,20 +157,19 @@ namespace DBInterface
         /// instance. Exception-safe.
         /// </summary>
         /// <returns>The copy.</returns>
-        public virtual ILookup ImmutableCopy()
+        public ILookup ImmutableCopy()
         {
             return new Lookup(this);
         }
 
-        public virtual bool Equals(ILookup other)
+        public bool Equals(ILookup other)
         {
-            if (other.Key == null || Key == null)
-                return (other.Key == null) ^ (Key == null);
-            return other.Key.Equals(this.Key);
+            // alias Lookup.Equals
+            return (ImmutableCopy() as Lookup).Equals(other);
         }
     }
 
-    internal class LookupResult: ILookupResult
+    internal class LookupResult: ILookupResult<ILookup>
     {
         internal LookupResult(ILookup _query, System.Object _result)
         {

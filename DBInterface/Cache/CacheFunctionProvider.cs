@@ -11,7 +11,7 @@ namespace DBInterface.Cache
         public class IllegalCacheOperationException : ApplicationException
         { }
 
-        public sealed class CacheFunctionProvider: ILookupProvider
+        public sealed class CacheFunctionProvider: ILookupProvider<ILookup>
         {
             public sealed class NullKeyException : IllegalCacheOperationException
             { }
@@ -34,10 +34,12 @@ namespace DBInterface.Cache
             private void ValidateParams(ILookup query)
             {
                 if (query == null) throw new NullQueryException();
-                ValidateParams(query.Key);
+                if (query is Lookup int_query)
+                    ValidateParams(int_query.Key_Internal);
+                else ValidateParams(query.KeyCopy);
             }
 
-            private void ValidateParams(ILookupResult entry)
+            private void ValidateParams(ILookupResult<ILookup> entry)
             {
                 if (entry == null) throw new ArgumentNullException(nameof(entry));
                 ValidateParams(entry.Query);
@@ -53,32 +55,41 @@ namespace DBInterface.Cache
             /// <param name="query">Query.</param>
             /// <exception cref="System.ArgumentNullException">One or more parameters are null</exception>
             /// <exception cref="NullKeyException">The supplied query has a null key</exception>
-            public ILookupResult CacheLookup(ILookup query)
+            public ILookupResult<ILookup> CacheLookup(ILookup query)
             {
                 ValidateParams(query);
-                return new LookupResult(query, cacheManager.Get(query.Key));
+                if (query is Lookup int_query)
+                    return new LookupResult(query, cacheManager.Get(int_query.Key_Internal));
+
+                return new LookupResult(query, cacheManager.Get(query.KeyCopy));
             }
 
-            public ILookupResult CacheLookup(string key)
+            public ILookupResult<ILookup> CacheLookup(string key)
             {
                 return CacheLookup(new Lookup(key));
             }
 
-            /// <summary>
-            /// Check whether cache contains an entry for the desired query
-            /// </summary>
-            /// <returns><c>true</c>, if cache contains specified entry, <c>false</c> otherwise.</returns>
-            /// <param name="query">Query.</param>
-            /// <exception cref="System.ArgumentNullException">One or more parameters are null</exception>
-            /// <exception cref="NullKeyException"><c>query</c> has a null key</exception>
-            public bool CacheContains(ILookup query)
+            internal bool CacheContains_Internal(Lookup query)
             {
                 ValidateParams(query);
-
-                return CacheContains(query.Key);
+                return CacheContains(query.Key_Internal);
             }
 
-            public bool CacheContains(string key)
+        /// <summary>
+        /// Check whether cache contains an entry for the desired query
+        /// </summary>
+        /// <returns><c>true</c>, if cache contains specified entry, <c>false</c> otherwise.</returns>
+        /// <param name="query">Query.</param>
+        /// <exception cref="System.ArgumentNullException">One or more parameters are null</exception>
+        /// <exception cref="NullKeyException"><c>query</c> has a null key</exception>
+        public bool CacheContains(ILookup query)
+            {
+                if (query is Lookup int_query) return CacheContains_Internal(int_query);
+                ValidateParams(query);
+                return CacheContains(query.KeyCopy);
+            }
+
+            internal bool CacheContains(string key)
             {
                 return cacheManager.Exists(key);
             }
@@ -90,19 +101,22 @@ namespace DBInterface.Cache
             /// <exception cref="System.ArgumentNullException">One or more parameters are null</exception>
             /// <exception cref="IllegalCacheOperationException">One or more required properties or
             /// sub-properties of <c>entry</c>is null</exception>
-            public void CacheSave(ILookupResult entry)
+            public void CacheSave(ILookupResult<ILookup> entry)
             {
                 ValidateParams(entry);
-                cacheManager.Put(entry.Query.Key, entry.Response);
+            ILookup query = entry.Query;
+            if (query is Lookup int_query)
+                cacheManager.Put(int_query.Key_Internal, entry.Response);
+            else
+                cacheManager.Put(query.KeyCopy, entry.Response);
             }
 
-            public void CacheSave(string key, object value)
+            internal void CacheSave(string key, object value)
             {
-                ValidateParams(key);
                 cacheManager.Put(key, value);
             }
 
-        public ILookupResult Lookup(ILookup query)
+        public ILookupResult<ILookup> Lookup(ILookup query)
         {
             return CacheLookup(query);
         }

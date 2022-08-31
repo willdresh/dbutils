@@ -3,7 +3,22 @@ namespace DBInterface
 {
     public interface ILookup
     {
+        /// <summary>
+        /// Gets a copy of the lookup key, or returns null. Direct references to the
+        /// lookup key itself cannot be obtained.
+        /// </summary>
         string KeyCopy { get; }
+    }
+
+    public interface IMutableLookup: System.IEquatable<ILookup>
+    {
+        ILookup ImmutableCopy();
+    }
+
+    public interface IMutableLookup<T>: System.IEquatable<T>
+        where T: class, ILookup
+    {
+        T ImmutableCopy();
     }
 
     public interface ICacheLookup: ILookup
@@ -39,10 +54,8 @@ namespace DBInterface
         where T: ILookup
     {
         T Query { get; }
-        System.Object Result { get; }
+        System.Object Response { get; }
     }
-
-    public interface ILookupResult: ILookupResult<ILookup> { }
 
     public interface ILookupProvider<T>
         where T: ILookup

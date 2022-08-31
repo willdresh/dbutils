@@ -5,17 +5,17 @@ using System.Data;
 
 namespace DBInterface
 {
-    internal sealed class DBLookupProvider: ILookupProvider<DBLookup>
+    public sealed class DBLookupProvider: ILookupProvider<DBLookupBase>
     {
         internal DBLookupProvider() { }
 
-        internal DBLookupResult Lookup_Internal(DBLookup query)
+        internal DBLookupResult Lookup_Internal(DBLookupBase query)
         {
             var connection = query.DBConnection;
             IDbTransaction xaction = connection.BeginTransaction();
             IDbCommand command = connection.CreateCommand();
             command.Transaction = xaction;
-            command.CommandText = query.Key;
+            command.CommandText = query.Key_Internal;
             IDataReader reader = command.ExecuteReader();
             DataTable result = new DataTable();
             result.Load(reader);
@@ -23,7 +23,7 @@ namespace DBInterface
             return DBLookupResult.Build_Internal(query, result);
         }
 
-        public ILookupResult Lookup(DBLookup query)
+        public ILookupResult<DBLookupBase> Lookup(DBLookupBase query)
         {
             return Lookup_Internal(query);
         }

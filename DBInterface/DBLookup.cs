@@ -26,17 +26,17 @@ namespace DBInterface
         { }
 
         internal DBLookup(MutableDBLookup other)
-            : base(other.Key_Internal, other.DBConnection)
-        {  }
+            : base(other.Key_Internal, other.Unwrap_Immutable.DBConnection)
+        { }
 
-	/// <summary>
-	/// Try to avoid using this constructor as it needs
-	/// two calls to ImmutableCopy(). Other constructors for this class
-	/// do not need to create any copies.
-	/// </summary>
-	internal DBLookup(IMutableLookup<DBLookupBase> other)
-		:base(other.ImmutableCopy().Key, other.ImmutableCopy().DBConnection)
-	{ }
+        /// <summary>
+        /// Try to avoid using this constructor as it needs
+        /// two calls to ImmutableCopy(). Other constructors for this class
+        /// do not need to create any copies.
+        /// </summary>
+     //   internal DBLookup(IMutableLookup<DBLookupBase> other)
+    	//	:base(other.ImmutableCopy().Key_Internal, other.ImmutableCopy().DBConnection)
+    	//{ }
 
         /// <summary>
         /// Build an immutable query for use with the supplied manager.
@@ -51,8 +51,13 @@ namespace DBInterface
         {
             if (mgr == null)
                 throw new DBLookupBugDetectedException(nameof(mgr));
+            if (query == null)
+                throw new ArgumentNullException(nameof(query));
 
-            return new DBLookup(query?.Key, mgr.connection);
+            string resultKey = (query is Lookup int_query) ? // Try to avoid calling KeyCopy by using interal reference, if possible
+                int_query.Key_Internal : query?.KeyCopy;
+
+            return new DBLookup(resultKey, mgr.connection);
         }
 
         /// <summary>
@@ -68,7 +73,7 @@ namespace DBInterface
             if (other == null)
                 throw new DBLookupBugDetectedException(nameof(other));
 
-            return new DBLookup(other.Key, other.DBConnection);
+            return new DBLookup(other.Key_Internal, other.DBConnection);
         }
     }
 
@@ -76,12 +81,11 @@ namespace DBInterface
     /// Mutable wrapper for <see cref="DBLookup"/>. This class cannot be
     /// externally inherited, as it has no public constructors.
     /// </summary>
-    internal class MutableDBLookup: IMutableLookup<DBLookupBase>
+    public class MutableDBLookup: IMutableLookup<DBLookupBase>, IMutableLookup<ILookup>
     {
         private DBLookup dbl;
 
         internal MutableDBLookup(string key = null, System.Data.IDbConnection dbConnection = null)
-            :base(key)
         {
             dbl = new DBLookup(key, dbConnection);
         }
@@ -93,9 +97,9 @@ namespace DBInterface
             set => dbl.DBConnection = value;
         }
 	
-	internal DBLookup Unwrap_Immutable { get => dbl; }
-	internal string Key_Internal { get => dbl.Key_Internal; set => dbl.Key_Internal = value; }
-	public string KeyCopy { get => dbl.KeyCopy; set => dbl.KeyCopy = value; }
+    	internal DBLookup Unwrap_Immutable { get => dbl; }
+    	internal string Key_Internal { get => dbl.Key_Internal; set => dbl.Key_Internal = value; }
+    	public string KeyCopy { get => dbl.KeyCopy; set => dbl.KeyCopy = value; }
 
         internal DBLookupBase ImmutableCopy_Internal()
         {
@@ -107,22 +111,18 @@ namespace DBInterface
             return ImmutableCopy_Internal();
         }
 
-        /// <summary>
-        /// Get an immutable copy of this mutable object
-        /// </summary>
-        /// <returns>A newly-constructed immutable copy of <c>this</c>.</returns>
-        public override ILookup ImmutableCopy()
+        public ILookup ImmutableCopy()
         {
             return ImmutableCopy_Internal();
         }
 
-	public bool Equals(DBLookupBase dblb)
-	{
-		return ReferenceEquals(DBConnection, dblb.DBConnection)
-			&& (this.Key_Internal == null ? other.Key_Internal == null : this.Key_Internal.Equals(other.Key_Internal));
-	}
+        public bool Equals(DBLookupBase dblb)
+    	{
+    		return ReferenceEquals(DBConnection, dblb.DBConnection)
+    			&& (this.Key_Internal == null ? other.Key_Internal == null : this.Key_Internal.Equals(other.Key_Internal));
+    	}
 
-        public override bool Equals(ILookup other)
+        public bool Equals(ILookup other)
         {
             if (ReferenceEquals(this, other))
                 return true;
@@ -139,7 +139,6 @@ namespace DBInterface
 
 	    return false;
         }
-
     }
 
     /// <summary>
@@ -148,51 +147,14 @@ namespace DBInterface
     /// <remarks>
     /// This class cannot be externally inherited, as it has no public constructors.
     /// </remarks>
-    internal class DBLookupResult: LookupResult, ILookupResult<DBLookupBase>
+    internal partial class DBLookupResult: LookupResult, ILookupResult<DBLookupBase>
     {
-
-        /// <summary>
-        /// DBLookupResult bug detected exception.
-        /// </summary>
-        /// <remarks>
-        /// These could be publicly caught as type <see cref="ArgumentNullException"/>.
-        /// </remarks>
-        internal sealed class DBLookupResult_BugDetectedException : ArgumentNullException
-        {
-            private static readonly string FBDEMessage = "A required argument was null in a call to a static internal method of DBLookupResult; this probably means a bug in the caller's code";
-            public DBLookupResult_BugDetectedException(string argumentName)
-                : base(argumentName, FBDEMessage) { }
-        }
-
-        /// <summary>
-        /// Internal instance expected exception.
-        /// </summary>
-        /// <remarks>
-        /// These could be publicly caught as type <see cref="SecurityException"/>
-        /// </remarks>
-        internal sealed class InternalInstanceExpectedException : SecurityException
-        {
-            private static readonly string IIEEMessage = "Internal DBLookupResult instance expected";
-
-            internal InternalInstanceExpectedException()
-                :base(IIEEMessage) {  }
-
-            internal InternalInstanceExpectedException(string message)
-                : base(GenerateMessage(message)) { }
-
-            private static string GenerateMessage(string msg)
-            {
-                return String.Format("{0}: {1}", IIEEMessage, msg);
-            }
-        }
-
         internal DBLookupResult(DBLookup query, object response)
             : base(query, response)
         { }
 
         internal DBLookup Query_Internal { get { return base.Query as DBLookup; } }
         public new DBLookupBase Query { get { return base.Query as DBLookupBase; } }
-
 
         /// <summary>
         /// Factory method
@@ -216,108 +178,23 @@ namespace DBInterface
         }
 
         /// <summary>
-        /// Builds the internal.
+        /// Builds an instance from a query and response (internal use only)
         /// </summary>
         /// <returns>A new instance</returns>
         /// <param name="query">(NOT NULL) Query.</param>
         /// <param name="response">(nullable) Response.</param>
         /// <exception cref="DBLookupResult_BugDetectedException"><c>query</c> is <c>null</c>.</exception>
-        /// <exception cref="InternalInstanceExpectedException"><c>query</c> is NOT an instance of <see cref="DBLookup"/>.
-        /// this is probably because a</exception>
-        internal static DBLookupResult Build_Internal(DBLookupBase query, object response)
+        internal static DBLookupResult Build_Internal(DBLookup query, object response)
         {
             if (query == null)
                 throw new DBLookupResult_BugDetectedException(nameof(query));
 
-            if (query is DBLookup immutableQuery)
-                return new DBLookupResult(immutableQuery, response);
-
-            throw new InternalInstanceExpectedException();
-        }
-    }
-
-
-    /// <summary>
-    /// Simple factory class to provide <see cref="T:DBLookupBase"/> instances for
-    /// use with <see cref="T:DBLookupManager"/>
-    /// </summary>
-    public static class DBLookupFactory
-    {
-        /// <summary>
-        /// Build a mutable query that can be used to perform lookups with the
-        /// supplied instance of <see cref="Type:DBLookupManager"/>.
-        /// </summary>
-        /// <returns>A newly-constructed mutable instance of <see cref="Type:DBLookupBase"/>
-        /// that can be used to perform lookup operations with the specified <see cref="Type:DBLookupManager"/> instance.</returns>
-        /// <param name="mgr">Instance which will execute the lookup that is returned by this method</param>
-        /// <param name="query">(Optional, default null) Provides the key necessary for lookup operations</param>
-        /// <seealso cref="DBLookupFactory.BuildLookup(DBLookupManager, ILookup)"/>
-        /// <exception cref="ArgumentNullException"><c>mgr</c> is <c>null</c>.</exception>
-        public static IMutableLookup<DBLookupBase> BuildMutableLookup(DBLookupManager mgr, ILookup query = null)
-        {
-            if (mgr == null)
-                throw new ArgumentNullException(nameof(mgr));
-
-            return new MutableDBLookup(query?.Key, mgr.connection);
+            return new DBLookupResult(query, response);
         }
 
-        /// <summary>
-        /// Build an immutable query that can be used to perform lookups with the
-        /// supplied instance of <see cref="Type:DBLookupManager"/>.
-        /// </summary>
-        /// <returns>A newly-constructed immutable instance of <see cref="Type:DBLookupBase"/>
-        /// that can be used to perform lookup operations with the specified <see cref="Type:DBLookupManager"/> instance</returns>
-        /// <param name="mgr">(NOT NULL) Instance which will execute the lookup that is returned by this method</param>
-        /// <param name="query">(NOT NULL) Provides the key necessary for lookup operations</param>
-        /// <seealso cref="DBLookupFactory.BuildMutableLookup(DBLookupManager, ILookup)"/>
-        /// <exception cref="ArgumentNullException"><c>mgr</c> or <c>query</c> is <c>null</c>.</exception>
-        public static DBLookupBase BuildLookup(DBLookupManager mgr, ILookup query)
+        internal static DBLookupResult Build_Internal(DBLookupBase query, DataTable result)
         {
-            if (mgr == null)
-                throw new ArgumentNullException(nameof(mgr));
-            if (query == null)
-                throw new ArgumentNullException(nameof(query));
-
-            return DBLookup.Build(mgr, query);
-        }
-
-        /// <summary>
-        /// Builds a result of a lookup operation. All lookup results are immutable.
-        /// </summary>
-        /// <returns>
-        /// A newly-constructed interface to an object representing the
-        /// result of a lookup operation.
-        /// </returns>
-        /// <param name="query">(NOT NULL) Query.</param>
-        /// <param name="result">(nullable) Result.</param>
-        /// <exception cref="ArgumentNullException"><c>query</c> is <c>null</c>.</exception>
-        internal static ILookupResult<DBLookupBase> BuildResult(DBLookupBase query, object result)
-        {
-            if (query == null)
-                throw new ArgumentNullException(nameof(query));
-
-            return DBLookupResult.Build_Internal(query, result);
-        }
-
-        /// <summary>
-        /// Builds a result of a lookup operation. All lookup results are immutable.
-        /// </summary>
-        /// <returns>
-        /// A newly-constructed interface to an object representing the
-        /// result of a lookup operation.
-        /// </returns>
-        /// <param name="mgr">(NOT NULL) Manager responsible for the query</param>
-        /// <param name="query">(NOT NULL) Object that knows how to provide the lookup key</param>
-        /// <param name="response">(nullable) Response to the query.</param>
-        /// <exception cref="ArgumentNullException">One or more required arguments are <c>null</c>.</exception>
-        internal static ILookupResult<DBLookupBase> BuildResult(DBLookupManager mgr, ILookup query, object response)
-        {
-            if (mgr == null)
-                throw new ArgumentNullException(nameof(mgr));
-            if (query == null)
-                throw new ArgumentNullException(nameof(query));
-
-            return DBLookupResult.Build(mgr, query, response);
+            throw new NotImplementedException();
         }
     }
 }

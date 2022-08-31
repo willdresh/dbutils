@@ -55,6 +55,8 @@
     <Compile Include="DBLookupProvider.cs" />
     <Compile Include="LookupManager.cs" />
     <Compile Include="DBLookupBase.cs" />
+    <Compile Include="DBLookup_Aux.cs" />
+    <Compile Include="DBLookupFactory.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

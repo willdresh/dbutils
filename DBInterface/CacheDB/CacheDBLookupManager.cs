@@ -192,7 +192,7 @@ namespace DBInterface.CacheDB
             return result;
         }
 
-        public ILookupResult Lookup(ILookup query, bool bypassCache = false, bool dontCacheResult = false)
+        public ILookupResult<ILookup> Lookup(ILookup query, bool bypassCache = false, bool dontCacheResult = false)
         {
             return Lookup(BuildLookup(query, bypassCache, dontCacheResult));
         }
@@ -230,7 +230,7 @@ namespace DBInterface.CacheDB
         /// <param name="lookup">Lookup.</param>
         /// <exception cref="CacheLookupNotAllowedException">thrown if policy prohibits the
         /// use of custom cache lookups</exception>
-        public ILookupResult Lookup_CacheOnly(ILookup lookup)
+        public ILookupResult<ILookup> Lookup_CacheOnly(ILookup lookup)
         {
             if (CanCustomCacheLookup)
                 return clp.CacheLookup(lookup);
@@ -243,7 +243,7 @@ namespace DBInterface.CacheDB
         /// <param name="lookupResult">Lookup result.</param>
         /// <exception cref="CacheInsertNotAllowedException">thrown if policy prohibits the
         /// use of custom cache insertions</exception>
-        public void Insert_CacheOnly(ILookupResult lookupResult)
+        public void Insert_CacheOnly(ILookupResult<ILookup> lookupResult)
         {
             if (CanCustomCacheInsert)
                 clp.CacheSave(lookupResult);

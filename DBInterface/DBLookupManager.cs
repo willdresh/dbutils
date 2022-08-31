@@ -162,7 +162,7 @@ namespace DBInterface
             return DatabaseLookup(query);
         }
 
-        protected override ILookupResult DoLookup(ILookup query)
+        protected override ILookupResult<ILookup> DoLookup(ILookup query)
         {
             if (query == null) throw new ArgumentNullException(nameof(query));
             return Lookup_Internal(BuildLookup(query));

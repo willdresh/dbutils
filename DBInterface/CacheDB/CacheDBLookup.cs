@@ -15,9 +15,7 @@ namespace DBInterface.CacheDB
         bool DontCacheResult { get; }
     }
 
-    public interface IMutableCacheDBLookup: ICacheDBLookup, IMutableLookup<ICacheDBLookup> { }
-
-    public interface ICacheDBLookupResult: ILookupResult<ICacheDBLookup>, ILookupResult
+    public interface ICacheDBLookupResult: ILookupResult<ICacheDBLookup>, ILookupResult<ILookup>
     {
         DataSource ActualSource { get; }
     }
@@ -47,7 +45,7 @@ namespace DBInterface.CacheDB
         }
 
         internal CacheDBLookup(MutableCacheDBLookup mcdl)
-            :base(mcdl.Key, mcdl.DBConnection)
+            :base(mcdl.Key_Internal, mcdl.DBConnection)
         {
             BypassCache = mcdl.BypassCache;
             DontCacheResult = mcdl.DontCacheResult;
@@ -134,8 +132,8 @@ namespace DBInterface.CacheDB
     /// Mutable wrapper for <see cref="Type:CacheDBLookup"/>. This class cannot be
     /// externally inherited, as it has no public constructors.
     /// </summary>
-    internal sealed class MutableCacheDBLookup
-        :IMutableCacheDBLookup, IMutableLookup<DBLookupBase>, IMutableLookup
+    public sealed class MutableCacheDBLookup
+        :IMutableLookup<DBLookupBase>, IMutableLookup
     {
         public sealed class InternalInstanceExpectedException: SecurityException
         {
@@ -177,7 +175,7 @@ namespace DBInterface.CacheDB
             if (query == null)
                 throw new ArgumentNullException(nameof(query));
 
-            return new MutableCacheDBLookup(query.Key, query.DBConnection, bypassCache, dontCacheResult);
+            return new MutableCacheDBLookup(query.Key_Internal, query.DBConnection, bypassCache, dontCacheResult);
         }
 
         /// <summary>
@@ -192,10 +190,17 @@ namespace DBInterface.CacheDB
             if (manager == null)
                 throw new ArgumentNullException(nameof(manager));
 
-            return new MutableCacheDBLookup(lookup?.Key, manager.connection, bypassCache, dontCacheResult);
+            string lookupKey =
+                (lookup is Lookup int_lookup ?
+                    int_lookup.Key_Internal : 
+                    (lookup == null ?
+                        null :
+                    lookup.KeyCopy)
+                );
+            return new MutableCacheDBLookup(lookupKey, manager.connection, bypassCache, dontCacheResult);
         }
 
-        public static IMutableCacheDBLookup Build(CacheDBLookupManager manager, ILookup lu = null, bool bypassCache = false, bool dontCacheResult = false)
+        public static IMutableLookup<ICacheDBLookup> Build(CacheDBLookupManager manager, ILookup lu = null, bool bypassCache = false, bool dontCacheResult = false)
         {
             if (manager == null)
                 throw new ArgumentNullException(nameof(manager));
@@ -214,7 +219,7 @@ namespace DBInterface.CacheDB
             if (lookup == null)
                 throw new ArgumentNullException(nameof(lookup));
 
-            return new MutableCacheDBLookup(lookup.Key, lookup.DBConnection, lookup.BypassCache, lookup.DontCacheResult);
+            return new MutableCacheDBLookup(lookup.Key_Internal, lookup.DBConnection, lookup.BypassCache, lookup.DontCacheResult);
         }
 
         /// <summary>
@@ -226,30 +231,30 @@ namespace DBInterface.CacheDB
         /// <exception cref="Type:SecurityException">thrown in case the runtime type of <c>lookup</c>
         /// is not an instance of <see cref="Type:DBLookupBase"/>. Generally this indicates that
         /// the caller tried to pass an instance of externally-defined type, which might violate security</exception>
-        public static IMutableCacheDBLookup Build_Mutable_Copy(ICacheDBLookup lookup)
+        public static IMutableLookup<ICacheDBLookup> Build_Mutable_Copy(ICacheDBLookup lookup)
         {
             if (lookup is DBLookupBase dblb)
-                return new MutableCacheDBLookup(dblb.Key, dblb.DBConnection, lookup.BypassCache, lookup.DontCacheResult);
+                return new MutableCacheDBLookup(dblb.Key_Internal, dblb.DBConnection, lookup.BypassCache, lookup.DontCacheResult);
 
             throw new InternalInstanceExpectedException();
         }
 
         internal static MutableCacheDBLookup Build_Mutable_Copy_Internal(DBLookupBase lookup, bool bypassCache = false, bool dontCacheResult = false)
         {
-            return new MutableCacheDBLookup(lookup.Key, lookup.DBConnection, bypassCache, dontCacheResult);
+            return new MutableCacheDBLookup(lookup.Key_Internal, lookup.DBConnection, bypassCache, dontCacheResult);
         }
 
         #endregion
 
         /// <summary>
-        /// Obtain a direct reference to the <see cref="Type:CacheDBLookup"/> wrapped by this
+        /// Obtain a direct reference to the <see cref="CacheDBLookup"/> wrapped by this
         /// mutable accessor. CAUTION - for security/integrity, this reference should never
         /// be exposed externally.
         /// </summary>
-        /// <returns>the <see cref="Type:CacheDBLookup"/> wrapped by this instance</returns>
-        internal CacheDBLookup AsImmutable_Internal()
+        /// <returns>the <see cref="CacheDBLookup"/> wrapped by this instance</returns>
+        internal CacheDBLookup Unwrap_Immutable
         {
-            return cdlu;
+            get { return cdlu; }
         }
 
         internal CacheDBLookup ImmutableCopy_Internal()
@@ -278,46 +283,51 @@ namespace DBInterface.CacheDB
         /// </returns>
         DBLookupBase IMutableLookup<DBLookupBase>.ImmutableCopy()
         {
-            return new DBLookup(Key, DBConnection);
+            return new DBLookup(cdlu.Key_Internal, cdlu.DBConnection);
         }
 
         /// <summary>
         /// Obtain an immutable copy of <c>this</c> mutable instance.
         /// </summary>
         /// <returns>A newly-constructed immutable copy.</returns>
-        ICacheDBLookup IMutableLookup<ICacheDBLookup>.ImmutableCopy()
+        ILookup IMutableLookup.ImmutableCopy()
         {
-            return ImmutableCopy_Internal();
+            return new CacheDBLookup(this);
         }
 
-        ILookup IMutableLookup<ILookup>.ImmutableCopy()
+        public bool Equals(ILookup other)
         {
-            return ImmutableCopy_Internal();
-        }
+            string otherKey = (other is Lookup int_other ?
+                int_other.Key_Internal :
+                other.KeyCopy);
 
-        public override bool Equals(ILookup other)
-        {
-		bool result = this.Key_Internal == null ? other.Key_Internal == null : this.Key_Internal.Equals(other.Key_Internal);
+            bool result = cdlu.Key_Internal == null ? otherKey == null : cdlu.Key_Internal.Equals(otherKey);
+
             if (other is ICacheDBLookup cdbl)
             {
-                result = result && cdbl.BypassCache == BypassCache && cdbl.DontCacheResult == DontCacheResult;
+                result = result && Equals(cdbl);
+            }
+            if (other is MutableDBLookup int_mdbl)
+            {
+                result = result && ReferenceEquals(cdlu.DBConnection, int_mdbl.Unwrap_Immutable.DBConnection);
+            }
+            else if (other is IMutableLookup<DBLookupBase> ext_mdbl)
+            {
+                result = result && ReferenceEquals(cdlu.DBConnection, ext_mdbl.ImmutableCopy().DBConnection);
             }
 
-	    if (other is MutableDBLookup int_mdbl)
-	    {
-		result = result && ReferenceEquals(this.DBConnection, int_mdbl.Unwrap_Immutable.DBConnection);
-	    }
-	    else if (other is IMutableLookup<DBLookupBase> ext_mdbl)
-	    {
-		result = result && ReferenceEquals(this.DBConnection, ext_mdbl.ImmutableCopy().DBConnection);
-	    }
+            if (other is DBLookupBase dblb)
+            {
+                result = result && ReferenceEquals(cdlu.DBConnection, dblb.DBConnection);
+            }
 
-	    if (other is DBLookupBase dblb)
-	    {
-		result = result && ReferenceEquals(this.DBConnection, dblb.DBConnection);
-	    }
+            return result;
+        }
 
-		return result;
+        public bool Equals(DBLookupBase other)
+        {
+            if (other == null) return false;
+            return other.Equals(cdlu); // DBLookupBase.Equals(DBLookupBase)
         }
     }
 
@@ -326,7 +336,7 @@ namespace DBInterface.CacheDB
     /// CacheDB Lookup result. This class cannot be externally inherited, as it has no
     /// public constructors.
     /// </summary>
-    internal class CacheDBLookupResult: ICacheDBLookupResult
+    internal class CacheDBLookupResult: ILookupResult<ILookup>, ILookupResult<ICacheDBLookup>
     {
 
         internal CacheDBLookupResult(ICacheDBLookup query, object response, DataSource src)
@@ -359,17 +369,17 @@ namespace DBInterface.CacheDB
             return new CacheDBLookup(new DBLookup(lookup?.Key, manager.connection) as DBLookupBase, bypassCache, dontCacheResult);
         }
 
-        public static IMutableCacheDBLookup BuildMutableLookup(CacheDBLookupManager manager, ILookup lookup = null, bool bypassCache = false, bool dontCacheResult = false)
-        {
-            return MutableCacheDBLookup.Build(manager, lookup, bypassCache, dontCacheResult);
-        }
+        //public static IMutableLookup<DBLookupBase> BuildMutableLookup(CacheDBLookupManager manager, ILookup lookup = null, bool bypassCache = false, bool dontCacheResult = false)
+        //{
+        //    return MutableCacheDBLookup.Build(manager, lookup, bypassCache, dontCacheResult);
+        //}
 
         internal static ICacheDBLookup BuildLookup(DBLookupBase dbLookup, bool bypassCache = false, bool dontCacheResult = false)
         {
             return CacheDBLookup.Build(dbLookup, bypassCache, dontCacheResult);
         }
 
-        internal static IMutableCacheDBLookup BuildMutableLookup(DBLookupBase dbLookup, bool bypassCache = false, bool dontCacheResult = false)
+        internal static IMutableLookup<DBLookupBase> BuildMutableLookup(DBLookupBase dbLookup, bool bypassCache = false, bool dontCacheResult = false)
         {
             return MutableCacheDBLookup.Build_Mutable_Copy_Internal(dbLookup, bypassCache, dontCacheResult);
         }
