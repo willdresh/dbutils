@@ -73,7 +73,7 @@ namespace DBInterface
         private ILookupResult<ILookup> DoLookup_Private(ILookup query)
         {
             ILookup immutableQuery = query;
-            if (query is IMutableLookup mutable) // Behavior of likely-external origin
+            if (query is IMutableLookup<ILookup>mutable) // Behavior of likely-external origin
             {
                 ILookup immutable = null;
                 External_IMutableLookup_VerificationFlags flags = 0;
@@ -219,7 +219,7 @@ namespace DBInterface
         }
 
         /// <summary>
-        /// Verifies that an externally-defined implementer of IMutableLookup behaves as expected.<br />
+        /// Verifies that an externally-defined implementer of IMutableLookup<ILookup>behaves as expected.<br />
         /// Expected behavior is that any instance returned by IMutableLookup.ImmutableCopy() is equal
         /// to its original, equal to itself, that the copy is also equal to itself, and that equality between
         /// original and copy is commutative.
@@ -228,7 +228,7 @@ namespace DBInterface
         /// <param name="ext_Lookup">Ext lookup.</param>
         /// <param name="verificationResult">Verification result.</param>
         private static bool Verify_External_IMutableLookup_ImmutableCopy_Equality
-            (IMutableLookup ext_Lookup, ref External_IMutableLookup_VerificationFlags verificationResult)
+            (IMutableLookup<ILookup> ext_Lookup, ref External_IMutableLookup_VerificationFlags verificationResult)
         {
             verificationResult |= External_IMutableLookup_VerificationFlags.TESTED_EQUALITY;
 
@@ -264,7 +264,7 @@ namespace DBInterface
 
 
         /// <summary>
-        /// Verifies that an externally-defined implementer of IMutableLookup behaves as expected.<br />
+        /// Verifies that an externally-defined implementer of IMutableLookup<ILookup>behaves as expected.<br />
         /// Expected behavior is that IMutableLookup.ImmutableCopy() returns
         /// an instance of ILookup whose RTT excludes IMutableLookup.<br />
         /// <br />
@@ -278,7 +278,7 @@ namespace DBInterface
         /// if it was an unexpected internal type.
         /// </remarks>
         private static bool Verify_External_IMutableLookup_ImmutableCopy_RTT
-             (IMutableLookup ext_Lookup, ref External_IMutableLookup_VerificationFlags verificationResult)
+             (IMutableLookup<ILookup> ext_Lookup, ref External_IMutableLookup_VerificationFlags verificationResult)
         {
             verificationResult |= External_IMutableLookup_VerificationFlags.TESTED_RTT;
 
@@ -290,7 +290,7 @@ namespace DBInterface
                 verificationResult |= External_IMutableLookup_VerificationFlags.ERR_COPY_REFERENCEEQUALS_ORIGINAL;
             }
 
-            if (immutable is IMutableLookup) // Verification fails
+            if (immutable is IMutableLookup<ILookup>) // Verification fails
             {
                 verificationResult |= External_IMutableLookup_VerificationFlags.ERR_IMMUTABLE_COPY_IS_MUTABLE;
                 result = false;
@@ -320,7 +320,7 @@ namespace DBInterface
         /// if it was an unexpected internal type.
         /// </remarks>
         private static bool Determine_IMutableLookup_RTT_is_Internal
-            (IMutableLookup ext_Lookup, ref External_IMutableLookup_VerificationFlags verificationResult)
+            (IMutableLookup<ILookup> ext_Lookup, ref External_IMutableLookup_VerificationFlags verificationResult)
         {
             if (ext_Lookup is MutableLookup) // Verification succeeds (RTT_TEST_PASSED flag set)
             {
@@ -354,7 +354,7 @@ namespace DBInterface
             return false;
         }
 
-        protected static bool VerifyInstance(IMutableLookup ext_Lookup, out External_IMutableLookup_VerificationFlags flags)
+        protected static bool VerifyInstance(IMutableLookup<ILookup> ext_Lookup, out External_IMutableLookup_VerificationFlags flags)
         {
             flags = 0;
             if (Determine_IMutableLookup_RTT_is_Internal(ext_Lookup, ref flags))
@@ -364,7 +364,7 @@ namespace DBInterface
                 && Verify_External_IMutableLookup_ImmutableCopy_Equality(ext_Lookup, ref flags);
         }
 
-        protected static bool VerifyInstance(IMutableLookup ext_Lookup)
+        protected static bool VerifyInstance(IMutableLookup<ILookup> ext_Lookup)
         {
             return VerifyInstance(ext_Lookup, out External_IMutableLookup_VerificationFlags flags);
         }

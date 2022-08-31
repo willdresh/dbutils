@@ -62,7 +62,7 @@ namespace DBInterface
             | DBConnectionPolicy.AUTO_DISCONNECT_WHEN_AUTOCONNECTED;
 
         internal IDbConnection connection;
-        private ILookupProvider<DBLookup> dblp;
+        private ILookupProvider<DBLookupBase> dblp;
 
         public DBConnectionPolicy ConnectionPolicy { get; }
         public ConnectionState ConnectionState { get { return connection.State; } }
@@ -75,7 +75,7 @@ namespace DBInterface
             ConnectionPolicy = policy;
         }
 
-        internal DBLookupManager(IDbConnection _connection, ILookupProvider<DBLookup> databaseLookupProvider, DBConnectionPolicy policy = DEFAULT_Connection_Policy)
+        internal DBLookupManager(IDbConnection _connection, ILookupProvider<DBLookupBase> databaseLookupProvider, DBConnectionPolicy policy = DEFAULT_Connection_Policy)
         {
             connection = _connection;
             dblp = databaseLookupProvider;
@@ -94,15 +94,15 @@ namespace DBInterface
 
         private DBLookup BuildLookup(ILookup query)
         {
-            return new DBLookup(query.Key, connection);
+            return new DBLookup(query.KeyCopy, connection);
         }
 
-        protected DBLookupBase BuildLookupBase(ILookup query)
+        public DBLookupBase BuildLookupBase(ILookup query)
         {
             return BuildLookup(query);
         }
 
-        internal DBLookupResult BuildFailureInstance_Internal(DBLookup query)
+        internal DBLookupResult BuildFailureInstance_Internal(DBLookupBase query)
         {
             if (query == null)
                 throw new DBLookupManagerBugDetectedException(nameof(BuildFailureInstance_Internal), nameof(query));
@@ -145,7 +145,7 @@ namespace DBInterface
                     result = provider.Lookup_Internal(query);
                 else
                 {
-                    ILookupResult lookupResult = dblp.Lookup(query);
+                    ILookupResult<DBLookupBase> lookupResult = dblp.Lookup(query);
                     if (lookupResult is DBLookupResult success)
                         result = success;
                     else throw new InternalInstanceExpectedException("Runtime type returned by DBLookupManager.dblp.Lookup(DBLookup) was not an instance of DBLookupResult. This could be because this instance's dblp has an externally-defined type.");

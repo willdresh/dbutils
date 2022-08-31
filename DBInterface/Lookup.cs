@@ -73,8 +73,8 @@ namespace DBInterface
         public override int GetHashCode()
         {
             int result = Hashcode_XOR_Operand;
-            if (Key != null)
-                result ^= Key.GetHashCode();
+            if (Key_Internal != null)
+                result ^= Key_Internal.GetHashCode();
 
             return result;
         }
@@ -87,7 +87,7 @@ namespace DBInterface
     /// This class cannot be externally inherited, as it has no
     /// public constructor.
     /// </remarks>
-    public class MutableLookup: ILookup, IMutableLookup
+    public class MutableLookup: ILookup, IMutableLookup<ILookup>
     {
         internal sealed class MutableLookup_BugDetectedException: ArgumentNullException
         {
@@ -147,7 +147,7 @@ namespace DBInterface
         /// </summary>
         /// <returns>A newly-constructed instance.</returns>
         /// <param name="key">(nullable) Key.</param>
-        public static IMutableLookup Build(string key=null)
+        public static IMutableLookup<ILookup> Build(string key=null)
         {
             return Build_Internal(key);
         }

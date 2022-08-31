@@ -10,11 +10,6 @@ namespace DBInterface
         string KeyCopy { get; }
     }
 
-    public interface IMutableLookup: System.IEquatable<ILookup>
-    {
-        ILookup ImmutableCopy();
-    }
-
     public interface IMutableLookup<T>: System.IEquatable<T>
         where T: class, ILookup
     {

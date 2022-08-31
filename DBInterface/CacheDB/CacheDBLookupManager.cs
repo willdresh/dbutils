@@ -106,6 +106,15 @@ namespace DBInterface.CacheDB
             return new CacheDBLookupResult(query, null, DataSource.NONE);
         }
 
+        private static CacheDBLookupResult GetFailureInstance_Internal(DBLookupBase query)
+        {
+            // Passing a dbl_query, if possible, will save a copy operation
+            if (query is DBLookup dbl_query)
+                return new CacheDBLookupResult(new CacheDBLookup(dbl_query, false, false), null, DataSource.NONE);
+
+            return new CacheDBLookupResult(new CacheDBLookup(query, false, false), null, DataSource.NONE);
+        }
+
         /// <summary>
         /// Gets the failure instance.
         /// </summary>
@@ -119,16 +128,16 @@ namespace DBInterface.CacheDB
             if (query == null)
                 throw new ArgumentNullException(nameof(query));
 
-            if (query is MutableCacheDBLookup mutableCacheDBLookup)
-                return GetFailureInstance_Internal(mutableCacheDBLookup.ImmutableCopy_Internal());
+            if (query is MutableDBLookup mutableDBLookup)
+                return GetFailureInstance_Internal(mutableDBLookup.Unwrap_Immutable);
 
             if (query is CacheDBLookup lookup)
                 return GetFailureInstance_Internal(lookup) as ILookupResult<ICacheDBLookup>;
 
-            if (query is IMutableCacheDBLookup external_mutableCacheDBLookup)
+            if (query is IMutableLookup<ICacheDBLookup> external_mutableCacheDBLookup)
             {
                 // Custom-Defined Type Mutability Verification Triggered
-                if (VerifyInstance(external_mutableCacheDBLookup as IMutableLookup, out External_IMutableLookup_VerificationFlags flags))
+                if (VerifyInstance(external_mutableCacheDBLookup as IMutableLookup<ILookup>, out External_IMutableLookup_VerificationFlags flags))
                         return GetFailureInstance(external_mutableCacheDBLookup.ImmutableCopy());
                 throw new CustomTypeFailedVerificationException(flags);
             }

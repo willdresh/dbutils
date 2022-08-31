@@ -119,7 +119,7 @@ namespace DBInterface
         public bool Equals(DBLookupBase dblb)
     	{
     		return ReferenceEquals(DBConnection, dblb.DBConnection)
-    			&& (this.Key_Internal == null ? other.Key_Internal == null : this.Key_Internal.Equals(other.Key_Internal));
+    			&& (this.Key_Internal == null ? dblb.Key_Internal == null : this.Key_Internal.Equals(dblb.Key_Internal));
     	}
 
         public bool Equals(ILookup other)
@@ -128,16 +128,13 @@ namespace DBInterface
                 return true;
 
             if (other is MutableDBLookup int_mdbl) 
-		return Equals(int_mdbl.Unwrap_Immutable as DBLookupBase);
-	    if (other is DBLookupBase int_dblb)
+		        return Equals(int_mdbl.Unwrap_Immutable as DBLookupBase);
+	        if (other is DBLookupBase int_dblb)
                 return Equals(int_dblb);
-	    else if (other is IMutableLookup<DBLookupBase> ext_mdbl) {
-		DBLookupBase copy = ext_mdbl.ImmutableCopy();
-		return ReferenceEquals(DBConnection, copy.DBConnection)
-			&& (this.Key_Internal == null ? copy.Key_Internal == null : this.Key_Internal.Equals(copy.Key_Internal));
-	    }
+	        if (other is IMutableLookup<DBLookupBase> ext_mdbl)
+                return Equals(ext_mdbl.ImmutableCopy());
 
-	    return false;
+            return ImmutableCopy_Internal().Equals(other);
         }
     }
 
@@ -149,11 +146,10 @@ namespace DBInterface
     /// </remarks>
     internal partial class DBLookupResult: LookupResult, ILookupResult<DBLookupBase>
     {
-        internal DBLookupResult(DBLookup query, object response)
+        internal DBLookupResult(DBLookupBase query, object response)
             : base(query, response)
         { }
 
-        internal DBLookup Query_Internal { get { return base.Query as DBLookup; } }
         public new DBLookupBase Query { get { return base.Query as DBLookupBase; } }
 
         /// <summary>
@@ -184,7 +180,7 @@ namespace DBInterface
         /// <param name="query">(NOT NULL) Query.</param>
         /// <param name="response">(nullable) Response.</param>
         /// <exception cref="DBLookupResult_BugDetectedException"><c>query</c> is <c>null</c>.</exception>
-        internal static DBLookupResult Build_Internal(DBLookup query, object response)
+        internal static DBLookupResult Build_Internal(DBLookupBase query, object response)
         {
             if (query == null)
                 throw new DBLookupResult_BugDetectedException(nameof(query));
