@@ -65,7 +65,7 @@ namespace DBInterface
             if (LookupAllowed)
             {
                 if (query is IMutableLookup mutable)
-                    return DoLookup(mutable.AsImmutable());
+                    return DoLookup(mutable.ImmutableCopy());
                 else
                     return DoLookup(query);
             }

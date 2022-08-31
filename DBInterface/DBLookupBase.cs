@@ -29,16 +29,35 @@ namespace DBInterface
         /// Gets or sets the DB Connection.
         /// </summary>
         /// <value>The DBConnection.</value>
-        internal IDbConnection DBConnection { get; set; } // Do not make public!
+        /// <remarks>Keeping the database connection internal is essential
+        /// to the integrity of this assembly</remarks>
+        internal IDbConnection DBConnection {
+            // Do not make public!
+            get; set;
+        } 
+
+        /// <summary>
+        /// Gets the state of the DB Connection.
+        /// </summary>
+        /// <value>The state of the DB Connection.</value>
+        /// <remarks>
+        /// This property is provided with intent to allow for external
+        /// assemblies to inspect the connection state; internal components
+        /// should NOT depend on access to this property.
+        /// </remarks>
+        public System.Data.ConnectionState DBConnectionState
+        {
+            get { return DBConnection.State; }
+        }
 
         /// <summary>
         /// Defines custom equality behavior between instances of <c>DBLookupBase</c>,
         /// such that two instances are equal IF AND ONLY IF their <see cref="DBLookupBase.DBConnection"/>
-        /// are reference-equal.
+        /// properties are reference-equal AND they are equal according to base class <see cref="Lookup"/>.
         /// </summary>
-        /// <param name="other">The <see cref="DBInterface.DBLookupBase"/> to compare with the current <see cref="T:DBInterface.DBLookupBase"/>.</param>
+        /// <param name="other">The <see cref="DBInterface.DBLookupBase"/> to compare with the current <see cref="DBInterface.DBLookupBase"/>.</param>
         /// <returns><c>true</c> if the specified <see cref="DBInterface.DBLookupBase"/> is equal to the current
-        /// <see cref="T:DBInterface.DBLookupBase"/>; otherwise, <c>false</c>.</returns>
+        /// <see cref="DBInterface.DBLookupBase"/>; otherwise, <c>false</c>.</returns>
         public bool Equals(DBLookupBase other)
         {
             if (other == null) return false;

@@ -17,7 +17,7 @@ namespace DBInterface
         internal sealed class DBLookupBugDetectedException : ArgumentNullException
         {
             private static readonly string FBDEMessage = "A required argument was null in a call to a static internal method of DBLookup; this probably means a bug in the caller's code";
-            public DBLookupFactoryBugDetectedException(string argumentName)
+            public DBLookupBugDetectedException(string argumentName)
                 : base(argumentName, FBDEMessage) { }
         }
 
@@ -135,7 +135,7 @@ namespace DBInterface
             }
         }
 
-        private DBLookupResult(DBLookup query, object response)
+        internal DBLookupResult(DBLookup query, object response)
             : base(query, response)
         { }
 

@@ -55,8 +55,22 @@ namespace DBInterface
         }
     }
 
-    public class MutableLookup: IMutableLookup, IEquatable<MutableLookup>
+    /// <summary>
+    /// Mutable lookup.
+    /// </summary>
+    /// <remarks>
+    /// This class cannot be externally inherited, as it has no
+    /// public constructor.
+    /// </remarks>
+    public class MutableLookup: IMutableLookup
     {
+        internal sealed class MutableLookup_BugDetectedException: ArgumentNullException
+        {
+            private static readonly string FBDEMessage = "A required argument was null in a call to a static internal method of MutableLookup; this probably means a bug in the caller's code";
+            public MutableLookup_BugDetectedException(string argumentName)
+                : base(argumentName, FBDEMessage) { }
+        }
+
         private const int Hashcode_XOR_Operand = 48;
 
         private readonly Lookup lu;
@@ -77,51 +91,62 @@ namespace DBInterface
             set { lu.Key = value; }
         }
 
-        public static MutableLookup Copy_Internal(MutableLookup original)
+        /// <summary>
+        /// Copies (internal use only)
+        /// </summary>
+        /// <param name="original">(NOT NULL) Original</param>
+        /// <returns>A newly-constructed copy</returns>
+        /// <exception cref="MutableLookup_BugDetectedException"><c>original</c> is <c>null</c>.</exception>
+        internal static MutableLookup Copy_Internal(MutableLookup original)
         {
+            if (original == null)
+                throw new MutableLookup_BugDetectedException(nameof(original));
+
             return new MutableLookup(original);
         }
 
+        /// <summary>
+        /// Copy the specified original.
+        /// </summary>
+        /// <param name="original">(NOT NULL)Original.</param>
+        /// <returns>A newly-constructed copy.</returns>
+        /// <exception cref="ArgumentNullException"><c>original</c> is <c>null</c>.</exception>
         public static IMutableLookup Copy(MutableLookup original)
         {
+            if (original == null)
+                throw new ArgumentNullException(nameof(original));
+
             return Copy_Internal(original);
         }
 
-        internal static MutableLookup Build_Internal(string key)
+        /// <summary>
+        /// Builds an instance. Exception-safe. (Internal use only)
+        /// </summary>
+        /// <returns>A newly-constructed instance.</returns>
+        /// <param name="key">(nullable) Key.</param>
+        internal static MutableLookup Build_Internal(string key=null)
         {
             return new MutableLookup(key);
         }
 
-        public static IMutableLookup Build(string key)
+        /// <summary>
+        /// Builds an instance. Exception-safe.
+        /// </summary>
+        /// <returns>A newly-constructed instance.</returns>
+        /// <param name="key">(nullable) Key.</param>
+        public static IMutableLookup Build(string key=null)
         {
             return Build_Internal(key);
         }
 
-        public bool Equals(MutableLookup other)
+        /// <summary>
+        /// Construct and return a new immutable copy of this
+        /// instance. Exception-safe.
+        /// </summary>
+        /// <returns>The copy.</returns>
+        public ILookup ImmutableCopy()
         {
-            return this.AsImmutable().Equals(other.AsImmutable());
-        }
-
-        internal virtual Lookup AsImmutable_Internal()
-        {
-            return lu;
-        }
-
-        public ILookup AsImmutable()
-        {
-            return AsImmutable_Internal();
-        }
-
-        public override bool Equals(object obj)
-        {
-            MutableLookup other = obj as MutableLookup;
-            if (obj == null || other == null) return Equals(other);
-            return false;
-        }
-
-        public override int GetHashCode()
-        {
-            return lu.GetHashCode() ^ Hashcode_XOR_Operand;
+            return new Lookup(this);
         }
     }
 

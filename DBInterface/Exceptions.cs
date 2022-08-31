@@ -53,6 +53,11 @@ namespace DBInterface
         }
     }
 
+    /// <summary>
+    /// Security exception.
+    /// </summary>
+    /// <remarks>This class cannot be externally inherited, as it has
+    /// no public constructor.</remarks>
     public class SecurityException: OperationNotPermittedException
     {
         private static readonly string SecurityMessage = "Application security violation";
@@ -100,23 +105,24 @@ namespace DBInterface
     /// Policy prohibits auto connect exception. Cannot be externally inherited, as it has
     /// no public constructor.
     /// </summary>
-    public class PolicyProhibitsAutoConnectException: DataUnreachableException
-    {
-        private static readonly string DefaultMessage = "Connection policy prohibits auto-connect";
+    /// <remarks>Deprecated</remarks>
+    //public class PolicyProhibitsAutoConnectException: DataUnreachableException
+    //{
+    //    private static readonly string DefaultMessage = "Connection policy prohibits auto-connect";
 
-        internal PolicyProhibitsAutoConnectException()
-            : base(DefaultMessage) { }
+    //    internal PolicyProhibitsAutoConnectException()
+    //        : base(DefaultMessage) { }
 
-        internal PolicyProhibitsAutoConnectException(string message)
-            : base(GenerateMessage(message)) { }
+    //    internal PolicyProhibitsAutoConnectException(string message)
+    //        : base(GenerateMessage(message)) { }
 
-        internal PolicyProhibitsAutoConnectException(string message, Exception innerException)
-            : base(GenerateMessage(message), innerException) { }
+    //    internal PolicyProhibitsAutoConnectException(string message, Exception innerException)
+    //        : base(GenerateMessage(message), innerException) { }
 
-        private static string GenerateMessage(string msg)
-        {
-            return String.Format("{0}: {1}", DefaultMessage, msg);
-        }
-    }
+    //    private static string GenerateMessage(string msg)
+    //    {
+    //        return String.Format("{0}: {1}", DefaultMessage, msg);
+    //    }
+    //}
 
 }

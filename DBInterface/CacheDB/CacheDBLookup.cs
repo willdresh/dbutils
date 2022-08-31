@@ -31,7 +31,7 @@ namespace DBInterface.CacheDB
         internal sealed class CacheDBLookupBugDetectedException: ArgumentNullException
         {
             private static readonly string FBDEMessage = "A required argument was null in a call to a static internal method of CacheDBLookup; this probably means a bug in the caller's code";
-            public CacheDBLookupBugDetectedException(string argumentName)
+            internal CacheDBLookupBugDetectedException(string argumentName)
                 :base(argumentName, FBDEMessage) {  }
         }
 
@@ -299,28 +299,26 @@ namespace DBInterface.CacheDB
     /// CacheDB Lookup result. This class cannot be externally inherited, as it has no
     /// public constructors.
     /// </summary>
-    internal class CacheDBLookupResult: LookupResult, ICacheDBLookupResult
+    internal class CacheDBLookupResult: DBLookupResult, ICacheDBLookupResult
     {
-        internal CacheDBLookupResult(ICacheDBLookup query, object response, DataSource src)
-            : base(query, response)
-        {
-            ActualSource = src;
-        }
+        internal CacheDBLookupResult(CacheDBLookup query, object response, DataSource src)
+            :base(query, response)
+        { ActualSource = src; }
 
         public DataSource ActualSource { get; }
         public new ICacheDBLookup Query { get; }
 
-        internal static CacheDBLookupResult Build_Internal(ILookupResult<ICacheDBLookup> result, CacheDBLookupManager mgr, DataSource src)
+        internal static CacheDBLookupResult Build_Internal(ILookupResult<CacheDBLookup> result, CacheDBLookupManager mgr, DataSource src)
         {
             return new CacheDBLookupResult(result.Query, result.Response, src);
         }
 
         internal static CacheDBLookupResult Build_Internal(DBLookupResult result, CacheDBLookupManager mgr, DataSource src)
         {
-            return new CacheDBLookupResult(CacheDBLookup.Build_Internal(result.Query, mgr), result.Response, src);
+            return new CacheDBLookupResult(CacheDBLookup.Build_Internal(mgr as DBLookupManager,result.Query_Internal), result.Response, src);
         }
 
-        public static ICacheDBLookupResult Build(ILookupResult<ICacheDBLookup> result, CacheDBLookupManager mgr, DataSource src)
+        public static ICacheDBLookupResult Build(ILookupResult<CacheDBLookup> result, CacheDBLookupManager mgr, DataSource src)
         {
             return Build_Internal(result, mgr, src);
         }

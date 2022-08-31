@@ -8,7 +8,7 @@ namespace DBInterface
     }
 
     public interface IMutableLookup<T>: ILookup
-        where T : class, ILookup
+        where T: class, ILookup
     {
         /// <summary>
         /// Get an immutable copy of this mutable object

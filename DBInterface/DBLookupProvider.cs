@@ -20,7 +20,7 @@ namespace DBInterface
             DataTable result = new DataTable();
             result.Load(reader);
 
-            return new DBLookupResult(query, result);
+            return DBLookupResult.Build_Internal(query, result);
         }
 
         public ILookupResult Lookup(DBLookup query)
