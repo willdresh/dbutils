@@ -135,7 +135,7 @@ namespace DBInterface.CacheDB
     /// externally inherited, as it has no public constructors.
     /// </summary>
     internal sealed class MutableCacheDBLookup
-        :ICacheDBLookup, IMutableCacheDBLookup, IMutableLookup<DBLookupBase>,
+        :MutableDBLookup, ICacheDBLookup, IMutableCacheDBLookup, IMutableLookup<DBLookupBase>,
         IMutableLookup
     {
         public sealed class InternalInstanceExpectedException: SecurityException
@@ -159,15 +159,18 @@ namespace DBInterface.CacheDB
         private CacheDBLookup cdlu;
 
         private MutableCacheDBLookup(string key = null, IDbConnection dbConnection = null, bool bypassCache = false, bool dontCacheResult = false)
+            :base(key, dbConnection)
         {
             cdlu = new CacheDBLookup(key, dbConnection, bypassCache, dontCacheResult);
+            BeforeDBConnectionSet += (newConnection) => cdlu.DBConnection = newConnection; // This allows cdlu.DBConnection to track with base.DBConnection
+            BeforeKeySet += (newKey) => cdlu.Key = newKey ?? null; // allow cdlu.Key to track with base.Key
         }
 
         public bool BypassCache { get => cdlu.BypassCache; set => cdlu.BypassCache = value; }
         public bool DontCacheResult { get => cdlu.BypassCache; set => cdlu.DontCacheResult = value; }
-        internal IDbConnection DBConnection { get => cdlu.DBConnection; }
-        public string Key { get => cdlu.Key; set => cdlu.Key = value; }
 
+
+        #region Static Builder Methods
         /// <summary>
         /// Builds an instance (internal use only).
         /// </summary>
@@ -241,6 +244,8 @@ namespace DBInterface.CacheDB
             return new MutableCacheDBLookup(lookup.Key, lookup.DBConnection, bypassCache, dontCacheResult);
         }
 
+        #endregion
+
         /// <summary>
         /// Obtain a direct reference to the <see cref="Type:CacheDBLookup"/> wrapped by this
         /// mutable accessor. CAUTION - for security/integrity, this reference should never
@@ -293,6 +298,16 @@ namespace DBInterface.CacheDB
         ILookup IMutableLookup<ILookup>.ImmutableCopy()
         {
             return ImmutableCopy_Internal();
+        }
+
+        public override bool Equals(ILookup other)
+        {
+            if (other is ICacheDBLookup cdbl)
+            {
+                return cdbl.BypassCache == BypassCache && cdbl.DontCacheResult == DontCacheResult
+                    && base.Equals(other);
+            }
+            else return base.Equals(other);
         }
     }
 

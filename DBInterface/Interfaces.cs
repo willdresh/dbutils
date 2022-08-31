@@ -2,7 +2,7 @@
 
 namespace DBInterface
 {
-    public interface ILookup
+    public interface ILookup: System.IEquatable<ILookup>
     {
         string Key { get; }
     }

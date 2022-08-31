@@ -67,28 +67,73 @@ namespace DBInterface
     /// Mutable wrapper for <see cref="Type:DBLookup"/>. This class cannot be
     /// externally inherited, as it has no public constructors.
     /// </summary>
-    internal sealed class MutableDBLookup: IMutableLookup<DBLookupBase>
+    internal class MutableDBLookup: MutableLookup, IMutableLookup<DBLookupBase>
     {
-        private DBLookupBase dbl;
+        private DBLookup dbl;
 
         internal MutableDBLookup(string key = null, System.Data.IDbConnection dbConnection = null)
+            :base(key)
         {
             dbl = new DBLookup(key, dbConnection);
+            BeforeDBConnectionSet += DontThrowExceptionIfNoSubscribers;
+            BeforeKeySet += Handle_BeforeKeySet;
         }
 
-        // DBConnection must never be made public to ensure integrity!
-        internal IDbConnection DBConnection { get => dbl.DBConnection; set => dbl.DBConnection = value; }
+        private void Handle_BeforeKeySet(string newKey)
+        {
+            dbl.Key = newKey == null ? null : String.Copy(newKey);
+        }
 
-        public string Key => dbl.Key;
+        private void DontThrowExceptionIfNoSubscribers(System.Data.IDbConnection dbConnection) { }
+
+        protected event Action<System.Data.IDbConnection> BeforeDBConnectionSet;
+
+        // DBConnection must never be made public to ensure integrity!
+        internal IDbConnection DBConnection
+        {
+            get => dbl.DBConnection;
+            set
+            {
+                BeforeDBConnectionSet.Invoke(value);
+                dbl.DBConnection = value;
+            }
+        }
+
+        internal DBLookupBase ImmutableCopy_Internal()
+        {
+            return new DBLookup(this);
+        }
+
+        DBLookupBase IMutableLookup<DBLookupBase>.ImmutableCopy()
+        {
+            return ImmutableCopy_Internal();
+        }
 
         /// <summary>
         /// Get an immutable copy of this mutable object
         /// </summary>
         /// <returns>A newly-constructed immutable copy of <c>this</c>.</returns>
-        public DBLookupBase ImmutableCopy()
+        public override ILookup ImmutableCopy()
         {
-            return new DBLookup(this);
+            return ImmutableCopy_Internal();
         }
+
+        public override bool Equals(ILookup other)
+        {
+            if (ReferenceEquals(this, other))
+                return true;
+
+            if (other is DBLookupBase dblb)
+                return ReferenceEquals(DBConnection, dblb.DBConnection) && base.Equals(other);
+            else return base.Equals(other);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is ILookup other) return Equals(other);
+            else return false;
+        }
+
     }
 
     /// <summary>

@@ -182,7 +182,7 @@ namespace DBInterface.CacheDB
                 }
                 catch (InternalInstanceExpectedException ex)
                 {
-                    throw new NotImplementedException("Support for externally-defined types of DBLookup has not been implemented", ex);
+                    throw new NotImplementedException("Support for externally-defined types has not been implemented", ex);
                 }
 
                 if (!cacheFirst && !gotFromDatabase)
