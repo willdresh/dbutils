@@ -135,8 +135,7 @@ namespace DBInterface.CacheDB
     /// externally inherited, as it has no public constructors.
     /// </summary>
     internal sealed class MutableCacheDBLookup
-        :MutableDBLookup, ICacheDBLookup, IMutableCacheDBLookup, IMutableLookup<DBLookupBase>,
-        IMutableLookup
+        :IMutableCacheDBLookup, IMutableLookup<DBLookupBase>, IMutableLookup
     {
         public sealed class InternalInstanceExpectedException: SecurityException
         {
@@ -159,16 +158,12 @@ namespace DBInterface.CacheDB
         private CacheDBLookup cdlu;
 
         private MutableCacheDBLookup(string key = null, IDbConnection dbConnection = null, bool bypassCache = false, bool dontCacheResult = false)
-            :base(key, dbConnection)
         {
             cdlu = new CacheDBLookup(key, dbConnection, bypassCache, dontCacheResult);
-            BeforeDBConnectionSet += (newConnection) => cdlu.DBConnection = newConnection; // This allows cdlu.DBConnection to track with base.DBConnection
-            BeforeKeySet += (newKey) => cdlu.Key = newKey ?? null; // allow cdlu.Key to track with base.Key
         }
 
         public bool BypassCache { get => cdlu.BypassCache; set => cdlu.BypassCache = value; }
         public bool DontCacheResult { get => cdlu.BypassCache; set => cdlu.DontCacheResult = value; }
-
 
         #region Static Builder Methods
         /// <summary>
@@ -302,12 +297,27 @@ namespace DBInterface.CacheDB
 
         public override bool Equals(ILookup other)
         {
+		bool result = this.Key_Internal == null ? other.Key_Internal == null : this.Key_Internal.Equals(other.Key_Internal);
             if (other is ICacheDBLookup cdbl)
             {
-                return cdbl.BypassCache == BypassCache && cdbl.DontCacheResult == DontCacheResult
-                    && base.Equals(other);
+                result = result && cdbl.BypassCache == BypassCache && cdbl.DontCacheResult == DontCacheResult;
             }
-            else return base.Equals(other);
+
+	    if (other is MutableDBLookup int_mdbl)
+	    {
+		result = result && ReferenceEquals(this.DBConnection, int_mdbl.Unwrap_Immutable.DBConnection);
+	    }
+	    else if (other is IMutableLookup<DBLookupBase> ext_mdbl)
+	    {
+		result = result && ReferenceEquals(this.DBConnection, ext_mdbl.ImmutableCopy().DBConnection);
+	    }
+
+	    if (other is DBLookupBase dblb)
+	    {
+		result = result && ReferenceEquals(this.DBConnection, dblb.DBConnection);
+	    }
+
+		return result;
         }
     }
 

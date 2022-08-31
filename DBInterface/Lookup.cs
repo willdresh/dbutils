@@ -14,17 +14,26 @@ namespace DBInterface
     {
         private const int Hashcode_XOR_Operand = 17;
 
+	private string key;
+
         internal Lookup(string _key)
         {
-            Key = _key == null ? null : String.Copy(_key);
+            key = _key == null ? null : String.Copy(_key);
         }
 
         internal Lookup(MutableLookup lu)
         {
-            Key = lu.Key == null ? null : String.Copy(lu.Key);
+            key = lu.Key_Internal ?? null;
         }
 
-        public string Key { get; internal set; }
+	internal string Key_Internal { get { return key; } }
+
+        /// <summary>
+        /// Gets a copy of the lookup key. Direct references to the
+	/// lookup key itself cannot be obtained.
+        /// </summary>
+        public string KeyCopy { get { return (key == null ? null : String.Copy(key)); } 
+	       	internal set { key = String.Copy(value); } }
 
         /// <summary>
         /// Implements deep value-equality between Lookup objects
@@ -34,9 +43,22 @@ namespace DBInterface
         public virtual bool Equals(ILookup other)
         {
             if (other == null) return false;
-            if (other.Key == null) return this.Key == null;
 
-            return other.Key.Equals(this.Key);
+	    string otherKey;
+
+	    // Apply Optimization:
+	    // If we are comparing to an internally-defined type (either Lookup or MutableLookup)
+	    // then we can avoid unnecessary key copying operations by using the internally-accessible
+	    // properties Unwrap_Immutable and Key_Internal.
+	    if (other is Lookup int_lu) 
+		otherKey = int_lu.Key_Internal;
+	    else if (other is MutableLookup mu) 
+		otherKey = mu.Unwrap_Immutable.Key_Internal;
+	    else otherKey = other.KeyCopy;
+	    // If we cannot infer a concrete type, then we'll have to use KeyCopy in order to compare keys.
+
+            if (Key_Internal == null) return otherKey == null;
+
         }
 
         public override bool Equals(object obj)
@@ -75,29 +97,22 @@ namespace DBInterface
 
         private readonly Lookup lu;
 
-        protected event Action<string> BeforeKeySet;
-
         internal MutableLookup(MutableLookup other)
         {
             lu = other.lu;
-            BeforeKeySet += (obj) => {; }; // Prevent event from being subscriberless  
-                                            // (events HATE that sort of thing, you know)
         }
 
         internal MutableLookup(string key = null)
         {
-            if (key != null)
-                lu = new Lookup(String.Copy(key));
-            else lu = new Lookup(null as string);
+		lu = new Lookup(this);
+	}
 
-            BeforeKeySet += (obj) => {; }; // Prevent event from being subscriberless  
-                                           // (events HATE that sort of thing, you know)
-        }
+	internal Lookup Unwrap_Immutable { get { return lu; } }
 
-        public string Key
+        public string KeyCopy
         {
-            get { return lu.Key; }
-            set { BeforeKeySet.Invoke(value); lu.Key = value; }
+            get { return lu.KeyCopy; }
+            set { lu.KeyCopy = value; }
         }
 
         /// <summary>

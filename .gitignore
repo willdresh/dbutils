@@ -1,5 +1,5 @@
 DBInterface/bin
 DBInterface/obj
 packages/
-
+*.cs.swp
 .vs/

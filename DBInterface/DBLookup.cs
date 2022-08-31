@@ -26,8 +26,17 @@ namespace DBInterface
         { }
 
         internal DBLookup(MutableDBLookup other)
-            : base(other.Key, other.DBConnection)
+            : base(other.Key_Internal, other.DBConnection)
         {  }
+
+	/// <summary>
+	/// Try to avoid using this constructor as it needs
+	/// two calls to ImmutableCopy(). Other constructors for this class
+	/// do not need to create any copies.
+	/// </summary>
+	internal DBLookup(IMutableLookup<DBLookupBase> other)
+		:base(other.ImmutableCopy().Key, other.ImmutableCopy().DBConnection)
+	{ }
 
         /// <summary>
         /// Build an immutable query for use with the supplied manager.
@@ -64,10 +73,10 @@ namespace DBInterface
     }
 
     /// <summary>
-    /// Mutable wrapper for <see cref="Type:DBLookup"/>. This class cannot be
+    /// Mutable wrapper for <see cref="DBLookup"/>. This class cannot be
     /// externally inherited, as it has no public constructors.
     /// </summary>
-    internal class MutableDBLookup: MutableLookup, IMutableLookup<DBLookupBase>
+    internal class MutableDBLookup: IMutableLookup<DBLookupBase>
     {
         private DBLookup dbl;
 
@@ -75,29 +84,18 @@ namespace DBInterface
             :base(key)
         {
             dbl = new DBLookup(key, dbConnection);
-            BeforeDBConnectionSet += DontThrowExceptionIfNoSubscribers;
-            BeforeKeySet += Handle_BeforeKeySet;
         }
-
-        private void Handle_BeforeKeySet(string newKey)
-        {
-            dbl.Key = newKey == null ? null : String.Copy(newKey);
-        }
-
-        private void DontThrowExceptionIfNoSubscribers(System.Data.IDbConnection dbConnection) { }
-
-        protected event Action<System.Data.IDbConnection> BeforeDBConnectionSet;
 
         // DBConnection must never be made public to ensure integrity!
-        internal IDbConnection DBConnection
+        private IDbConnection DBConnection
         {
             get => dbl.DBConnection;
-            set
-            {
-                BeforeDBConnectionSet.Invoke(value);
-                dbl.DBConnection = value;
-            }
+            set => dbl.DBConnection = value;
         }
+	
+	internal DBLookup Unwrap_Immutable { get => dbl; }
+	internal string Key_Internal { get => dbl.Key_Internal; set => dbl.Key_Internal = value; }
+	public string KeyCopy { get => dbl.KeyCopy; set => dbl.KeyCopy = value; }
 
         internal DBLookupBase ImmutableCopy_Internal()
         {
@@ -118,20 +116,28 @@ namespace DBInterface
             return ImmutableCopy_Internal();
         }
 
+	public bool Equals(DBLookupBase dblb)
+	{
+		return ReferenceEquals(DBConnection, dblb.DBConnection)
+			&& (this.Key_Internal == null ? other.Key_Internal == null : this.Key_Internal.Equals(other.Key_Internal));
+	}
+
         public override bool Equals(ILookup other)
         {
             if (ReferenceEquals(this, other))
                 return true;
 
-            if (other is DBLookupBase dblb)
-                return ReferenceEquals(DBConnection, dblb.DBConnection) && base.Equals(other);
-            else return base.Equals(other);
-        }
+            if (other is MutableDBLookup int_mdbl) 
+		return Equals(int_mdbl.Unwrap_Immutable as DBLookupBase);
+	    if (other is DBLookupBase int_dblb)
+                return Equals(int_dblb);
+	    else if (other is IMutableLookup<DBLookupBase> ext_mdbl) {
+		DBLookupBase copy = ext_mdbl.ImmutableCopy();
+		return ReferenceEquals(DBConnection, copy.DBConnection)
+			&& (this.Key_Internal == null ? copy.Key_Internal == null : this.Key_Internal.Equals(copy.Key_Internal));
+	    }
 
-        public override bool Equals(object obj)
-        {
-            if (obj is ILookup other) return Equals(other);
-            else return false;
+	    return false;
         }
 
     }

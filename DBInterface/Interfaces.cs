@@ -1,39 +1,52 @@
 ﻿
-
 namespace DBInterface
 {
-    public interface ILookup: System.IEquatable<ILookup>
+    public interface ILookup
     {
-        string Key { get; }
+        string KeyCopy { get; }
     }
 
-    public interface IMutableLookup<T>: ILookup
-        where T: class, ILookup
+    public interface ICacheLookup: ILookup
     {
         /// <summary>
-        /// Get an immutable copy of this mutable object
+        /// Gets a value indicating whether this <see cref="T:DBInterface.ILookup"/> bypass cache.
         /// </summary>
-        /// <returns>A newly-constructed immutable copy of <c>this</c>.</returns>
-        T ImmutableCopy();
+        /// <value><c>true</c> if bypass cache; otherwise, <c>false</c>.</value>
+        bool BypassCache { get; }
+
+        /// <summary>
+        /// Gets a value indicating whether this <see cref="T:DBInterface.ICacheLookup"/> dont cache result.
+        /// </summary>
+        /// <value><c>true</c> if dont cache result; otherwise, <c>false</c>.</value>
+        bool DontCacheResult { get; }
     }
 
-    public interface IMutableLookup: IMutableLookup<ILookup> { }
+    public interface IDBLookup: ILookup
+    {
+        /// <summary>
+        /// Gets the DB Connection
+        /// </summary>
+        /// <value>The DBConnection</value>
+        System.Data.IDbConnection DBConnection { get; }
+    }
+
+    /// <summary>
+    /// Simply an alias for the intersection of ICacheLookup and IDBLookup
+    /// </summary>
+    public interface ICacheDBLookup : ICacheLookup, IDBLookup { }
 
     public interface ILookupResult<T>
         where T: ILookup
     {
         T Query { get; }
-        System.Object Response { get; }
+        System.Object Result { get; }
     }
 
     public interface ILookupResult: ILookupResult<ILookup> { }
 
-    internal interface ILookupProvider<T>
+    public interface ILookupProvider<T>
         where T: ILookup
     {
-        ILookupResult Lookup(T query);
+        ILookupResult<T> Lookup(T query);
     }
-
-    internal interface ILookupProvider: ILookupProvider<ILookup> {  }
-
 }
