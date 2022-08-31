@@ -17,7 +17,7 @@ namespace DBInterface.CacheDB
 
     public interface IMutableCacheDBLookup: ICacheDBLookup, IMutableLookup<ICacheDBLookup> { }
 
-    public interface ICacheDBLookupResult: ILookupResult<ICacheDBLookup>
+    public interface ICacheDBLookupResult: ILookupResult<ICacheDBLookup>, ILookupResult
     {
         DataSource ActualSource { get; }
     }
@@ -199,6 +199,8 @@ namespace DBInterface.CacheDB
 
         public static IMutableCacheDBLookup Build(CacheDBLookupManager manager, ILookup lu = null, bool bypassCache = false, bool dontCacheResult = false)
         {
+            if (manager == null)
+                throw new ArgumentNullException(nameof(manager));
             return Build_Internal(manager, lu, bypassCache, dontCacheResult);
         }
 
@@ -299,28 +301,25 @@ namespace DBInterface.CacheDB
     /// CacheDB Lookup result. This class cannot be externally inherited, as it has no
     /// public constructors.
     /// </summary>
-    internal class CacheDBLookupResult: DBLookupResult, ICacheDBLookupResult
+    internal class CacheDBLookupResult: ICacheDBLookupResult
     {
-        internal CacheDBLookupResult(CacheDBLookup query, object response, DataSource src)
-            :base(query, response)
-        { ActualSource = src; }
+
+        internal CacheDBLookupResult(ICacheDBLookup query, object response, DataSource src)
+        { ActualSource = src; Query = query;  Response = response; }
 
         public DataSource ActualSource { get; }
-        public new ICacheDBLookup Query { get; }
+        public object Response { get; }
+        public ICacheDBLookup Query { get; }
+        ILookup ILookupResult<ILookup>.Query { get { return Query; } }
 
-        internal static CacheDBLookupResult Build_Internal(ILookupResult<CacheDBLookup> result, CacheDBLookupManager mgr, DataSource src)
+        internal static CacheDBLookupResult Build_Internal(ICacheDBLookup query, object response, DataSource src)
         {
-            return new CacheDBLookupResult(result.Query, result.Response, src);
+            return new CacheDBLookupResult(query, response, src);
         }
 
-        internal static CacheDBLookupResult Build_Internal(DBLookupResult result, CacheDBLookupManager mgr, DataSource src)
+        public static ICacheDBLookupResult Build(ICacheDBLookup query, object response, DataSource src)
         {
-            return new CacheDBLookupResult(CacheDBLookup.Build_Internal(mgr as DBLookupManager,result.Query_Internal), result.Response, src);
-        }
-
-        public static ICacheDBLookupResult Build(ILookupResult<CacheDBLookup> result, CacheDBLookupManager mgr, DataSource src)
-        {
-            return Build_Internal(result, mgr, src);
+            return Build_Internal(query, response, src);
         }
     }
 

@@ -12,19 +12,33 @@ namespace DBInterface
     public abstract class LookupManager: ILookupProvider
     {
         /// <summary>
-        /// Lookup not permitted exception. This class cannot be externally inherited, as it has no
-        /// public constructors.
+        /// Custom type failed verification exception. This class cannot be inherited.
+        /// This class cannot be publicly constructed.
         /// </summary>
-        public class LookupNotPermittedException: OperationNotPermittedException
+        protected sealed class CustomTypeFailedVerificationException: SecurityException
+        {
+            private static readonly string CTFVEMessage = "A custom mutable instance failed internal integrity checks";
+
+            public External_IMutableLookup_VerificationFlags VerificationFlags { get; }
+
+            internal CustomTypeFailedVerificationException(External_IMutableLookup_VerificationFlags flags)
+                :base(CTFVEMessage)
+            { VerificationFlags = flags; }
+        }
+
+        /// <summary>
+        /// Lookup not permitted exception. This class cannot be inherited.
+        /// </summary>
+        protected sealed class LookupNotPermittedException: OperationNotPermittedException
         {
             private static readonly string LookupNotPermittedMessage = "Policy prohibits lookup operation";
-            internal LookupNotPermittedException()
+            public LookupNotPermittedException()
                 : base(LookupNotPermittedMessage) { }
 
-            internal LookupNotPermittedException(string message)
+            public LookupNotPermittedException(string message)
                 : base(GenerateMessage(message)) { }
 
-            internal LookupNotPermittedException(string message, Exception innerException)
+            public LookupNotPermittedException(string message, Exception innerException)
                 : base(GenerateMessage(message), innerException) { }
 
             private static string GenerateMessage(string msg)
@@ -39,37 +53,63 @@ namespace DBInterface
 
         public LookupPolicy Policy { get; }
 
+        // Constructor must remain internal to prevent external inheritance
         internal LookupManager(LookupPolicy policy = DEFAULT_Policy)
         {
-            Policy = DEFAULT_Policy;
+            Policy = policy;
         }
 
         /// <summary>
         /// Does the lookup.
         /// </summary>
-        /// <returns>The lookup.</returns>
-        /// <param name="query">Query (LookupManager guarantees that the runtime type of <c>query</c>
-        ///  will be immutable</param>
+        /// <returns>The result of the lookup operation.</returns>
+        /// <param name="query">Query (Precondition: the runtime type of <c>query</c>
+        ///  is immutable - i.e. implements ILookup AND DOES NOT implement IMutableLookup)</param>
         protected abstract ILookupResult DoLookup(ILookup query);
 
-        public virtual bool LookupAllowed { get => Policy.HasFlag(LookupPolicy.ALLOW_LOOKUP); }
+        public bool LookupAllowed { get => Policy.HasFlag(LookupPolicy.ALLOW_LOOKUP); }
+
+        /// <exception cref="CustomTypeFailedVerificationException"><c>query</c> is of externally-defined type, and did not pass internal verification.</exception>
+        private ILookupResult DoLookup_Private(ILookup query)
+        {
+            if (query is IMutableLookup mutable) // Behavior of likely-external origin
+            { 
+                // Verification Triggered
+                if (VerifyInstance(mutable, out External_IMutableLookup_VerificationFlags flags))
+                {
+                    ILookup immutable = mutable.ImmutableCopy();
+                    return DoLookup(immutable);
+                }
+
+                throw new CustomTypeFailedVerificationException(flags);
+            }
+            else
+                return DoLookup(query);
+        }
 
         /// <summary>
-        /// Lookup the specified query.
+        /// Lookup the specified query by calling <see cref="LookupManager.DoLookup(ILookup)"/>
         /// </summary>
-        /// <returns>The lookup.</returns>
+        /// <returns>The result of the lookup operation.</returns>
         /// <param name="query">Query.</param>
-        /// <exception cref="LookupNotPermittedException">Lookup is not allowed</exception>
+        /// <exception cref="ArgumentNullException"><c>query</c> is <c>null</c>.</exception>
+        /// <exception cref="LookupNotPermittedException">Lookup is not allowed by policy</exception>
+        /// <exception cref="CustomTypeFailedVerificationException"><c>query</c> is of externally-defined type, and did not pass internal verification.</exception>
+        /// <remarks>
+        /// In case <c>query</c> implements IMutableLookup, then verification will
+        /// be triggered; if successful an immutable instance will be created via <c>IMutableLookup.ImmutableCopy()</c>,
+        /// and it is this immutable copy - NOT the original - that will be processed by the base class override of
+        /// <see cref="LookupManager.DoLookup(ILookup)"/>
+        /// </remarks>
         public ILookupResult Lookup(ILookup query)
         {
+            if (query == null)
+                throw new ArgumentNullException(nameof(query));
+
             if (LookupAllowed)
-            {
-                if (query is IMutableLookup mutable)
-                    return DoLookup(mutable.ImmutableCopy());
-                else
-                    return DoLookup(query);
-            }
-            else throw new LookupNotPermittedException();
+                DoLookup_Private(query);
+
+            throw new LookupNotPermittedException();
         }
 
         /// <summary>
@@ -315,6 +355,11 @@ namespace DBInterface
 
             return Verify_External_IMutableLookup_ImmutableCopy_RTT(ext_Lookup, ref flags)
                 && Verify_External_IMutableLookup_ImmutableCopy_Equality(ext_Lookup, ref flags);
+        }
+
+        protected static bool VerifyInstance(IMutableLookup ext_Lookup)
+        {
+            return VerifyInstance(ext_Lookup, out External_IMutableLookup_VerificationFlags flags);
         }
     }
 }
