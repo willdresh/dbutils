@@ -20,7 +20,7 @@ namespace DBInterface
         /// </summary>
         public sealed class CustomTypeFailedVerificationException : SecurityException
         {
-            private static readonly string CTFVEMessage = "A custom mutable instance failed internal integrity checks";
+            private static readonly string CTFVEMessage = "A custom mutable instance failed internal integrity checks in MutableDBLookup";
 
             public VerificationFlags VerificationFlags { get; }
             public object Instance { get; }

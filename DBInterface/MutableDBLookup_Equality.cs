@@ -12,8 +12,8 @@ namespace DBInterface
         private static bool VerifyInstance(IMutableLookup<DBLookupBase> ext_mu_dblb, out VerificationFlags flags)
             => VerifyInstance(ext_mu_dblb as IMutableLookup<ILookup>, out flags);
 
-        private static bool VerifyInstance(IMutableLookup<ILookup> ext_mu_ext_lu, out VerificationFlags flags)
-            => LookupManager.VerifyInstance(ext_mu_ext_lu, out flags);
+        private static bool VerifyInstance(IMutableLookup<ILookup> ext_mu_ext_ilu, out VerificationFlags flags)
+            => LookupManager.VerifyInstance(ext_mu_ext_ilu, out flags);
 
         /// <summary>
         /// Unwraps the mutables. Triggers verification for externally-defined types.
@@ -25,7 +25,7 @@ namespace DBInterface
         /// </returns>
         /// <param name="other">Other.</param>
         /// <exception cref="CustomTypeFailedVerificationException"></exception>
-        private ILookup UnwrapMutables(ILookup other)
+        private static ILookup UnwrapMutables(ILookup other)
         {
             if (other is MutableDBLookup int_mdbl)
                 return int_mdbl.Unwrap_Immutable;

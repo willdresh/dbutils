@@ -9,8 +9,7 @@ namespace DBInterface
         ILookup
     {
 
-
-        internal DBLookupBase ImmutableCopy_Internal()
+        internal DBLookup ImmutableCopy_Internal()
         {
             return new DBLookup(this);
         }

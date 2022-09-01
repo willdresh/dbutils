@@ -10,9 +10,36 @@ namespace DBInterface.CacheDB
     /// Mutable wrapper for <see cref="Type:CacheDBLookup"/>. This class cannot be
     /// externally inherited, as it has no public constructors.
     /// </summary>
-    public sealed class MutableCacheDBLookup
-        :IMutableLookup<DBLookupBase>, IMutableLookup<ICacheLookup>, IMutableLookup<ILookup>
+    public sealed class MutableCacheDBLookup: 
+        IMutableLookup<DBLookupBase>,
+        IMutableLookup<ICacheLookup>, IMutableLookup<CacheDBLookup>, ICacheLookup,
+        IMutableLookup<ILookup>, ILookup
     {
+        public sealed class MCDBLCustomTypeFailedVerificationException : SecurityException
+        {
+            private static readonly string CTFVEMessage = "A custom mutable instance failed internal integrity checks in MutableCacheDBLookup";
+
+            public VerificationFlags Flags { get; }
+            public object Instance { get; }
+
+            internal MCDBLCustomTypeFailedVerificationException(string typeDescription, object instance, VerificationFlags flags)
+                : base(GenerateMessage(typeDescription, instance))
+            {
+                Flags = flags;
+                Instance = instance;
+            }
+
+            internal MCDBLCustomTypeFailedVerificationException(VerificationFlags flags)
+                : base(CTFVEMessage)
+            { Flags = flags; }
+
+            private static string GenerateMessage(string typeDescription, object instance)
+            {
+                if (typeDescription == null || instance == null) return String.Format("(unexpected: null parameter) {0}", CTFVEMessage);
+                return String.Format("{0} --- Custom description of type is {1} --- instance.ToString(): {2}", CTFVEMessage, typeDescription, instance.ToString());
+            }
+        }
+
         public sealed class InternalInstanceExpectedException: SecurityException
         {
             private static readonly string IIEEMessage = "Internal MutableCacheDBLookup instance expected";
@@ -127,6 +154,8 @@ namespace DBInterface.CacheDB
 
         #endregion
 
+        #region Immutable Copying / Unwrapping
+
         /// <summary>
         /// Obtain a direct reference to the <see cref="CacheDBLookup"/> wrapped by this
         /// mutable accessor. CAUTION - for security/integrity, this reference should never
@@ -181,91 +210,112 @@ namespace DBInterface.CacheDB
             return new CacheDBLookup(this);
         }
 
+        #endregion
+
+        private static bool VerifyInstance(IMutableLookup<ICacheLookup> ext_mu_icl, out VerificationFlags flags)
+            => VerifyInstance(ext_mu_icl as IMutableLookup<ILookup>, out flags);
+
+        private static bool VerifyInstance(IMutableLookup<CacheDBLookup> ext_mu_cdl, out VerificationFlags flags)
+            => VerifyInstance(ext_mu_cdl as IMutableLookup<ILookup>, out flags);
+
+        private static bool VerifyInstance(IMutableLookup<DBLookupBase> ext_mu_dblb, out VerificationFlags flags)
+            => VerifyInstance(ext_mu_dblb as IMutableLookup<ILookup>, out flags);
+
+        private static bool VerifyInstance(IMutableLookup<ILookup> ext_mu_ext_ilu, out VerificationFlags flags)
+            => LookupManager.VerifyInstance(ext_mu_ext_ilu, out flags);
+
+        /// <summary>
+        /// Unwraps the mutables. Triggers verification for externally-defined types.
+        /// </summary>
+        /// <returns>
+        /// An immutable copy, if the instance passed in was a mutable.
+        /// If the instance passed in was NOT detected as a known mutable type,
+        /// then returns <c>other</c>.
+        /// </returns>
+        /// <param name="other">Other.</param>
+        /// <exception cref="CustomTypeFailedVerificationException"></exception>
+        private static ILookup UnwrapMutables(ILookup other)
+        {
+            if (other is MutableCacheDBLookup int_mcdbl)
+                return int_mcdbl.Unwrap_Immutable;
+            if (other is MutableDBLookup int_mdbl)
+                return int_mdbl.Unwrap_Immutable;
+            if (other is MutableLookup int_ml)
+                return int_ml.Unwrap_Immutable;
+            if (other is IMutableLookup<CacheDBLookup> ext_mu_cdbl)
+            {
+                if (!VerifyInstance(ext_mu_cdbl, out VerificationFlags flags))
+                    throw new MCDBLCustomTypeFailedVerificationException("ext_mu_cdbl", ext_mu_cdbl, flags);
+                return ext_mu_cdbl.ImmutableCopy();
+            }
+            if (other is IMutableLookup<DBLookupBase> ext_mu_dblb)
+            {
+                if (!VerifyInstance(ext_mu_dblb, out VerificationFlags flags))
+                    throw new MCDBLCustomTypeFailedVerificationException("ext_mu_dblb", ext_mu_dblb, flags);
+                return ext_mu_dblb.ImmutableCopy();
+            }
+            if (other is IMutableLookup<ICacheLookup> ext_mu_icl)
+            {
+                if (!VerifyInstance(ext_mu_icl, out VerificationFlags flags))
+                    throw new MCDBLCustomTypeFailedVerificationException("ext_mu_icl", ext_mu_icl, flags);
+                return ext_mu_icl.ImmutableCopy();
+            }
+            if (other is IMutableLookup<ILookup> ext_mu_ilu)
+            {
+                if (!VerifyInstance(ext_mu_ilu, out VerificationFlags flags))
+                    throw new MCDBLCustomTypeFailedVerificationException("ext_mu_ilu", ext_mu_ilu, flags);
+                return ext_mu_ilu.ImmutableCopy();
+            }
+
+            return other;
+        }
+
         public bool Equals(ILookup other)
         {
+            if (ReferenceEquals(this, other)) return true;
+
+            // If we are using an internal type derived from Lookup,
+            //  then use our internal-only accessors to speed up key comparison
             string otherKey = (other is Lookup int_other ?
                 int_other.Key_Internal :
                 other.KeyCopy);
 
-            bool result = cdlu.Key_Internal == null ? otherKey == null : cdlu.Key_Internal.Equals(otherKey);
-
-            if (result == false) return false;
-
-            if (other is IMutableLookup<ICacheLookup> cl)
-            {
-                if (!LookupManager.VerifyInstance(cl as IMutableLookup<ILookup>, out VerificationFlags flags))
-                    throw new CustomTypeFailedVerificationException(flags);
-                if (result) {
-                    ICacheLookup immutable = cl.ImmutableCopy();
-                    result &= Equals(immutable);
-                    }
+            if (cdlu.Key_Internal == null) {
+                return otherKey == null;
             }
-            if (other is IMutableLookup<DBLookupBase> ml)
-            {
-                if (!LookupManager.VerifyInstance(ml as IMutableLookup<ILookup>, out VerificationFlags flags))
-                    throw new CustomTypeFailedVerificationException(flags);
-                if (result)
-                    result &= ReferenceEquals(cdlu.DBConnection, ml.ImmutableCopy().DBConnection);
-            }
-            if (other is IMutableLookup<ILookup> ext_ml_ext_lu)
-            {
-                if (!LookupManager.VerifyInstance(ext_ml_ext_lu as IMutableLookup<ILookup>, out VerificationFlags flags))
-                    throw new CustomTypeFailedVerificationException(flags);
+            if (!cdlu.Key_Internal.Equals(otherKey))
+                return false;
 
-                return Equals(ext_ml_ext_lu);
-            }
+            ILookup immutable = UnwrapMutables(other);
 
-            if (other is ICacheLookup cdbl)
-            {
-                result = result && Equals(cdbl);
-            }
+            if (immutable is CacheDBLookup cdbl)
+                return Equals(cdbl);
+            if (immutable is DBLookupBase dblb)
+                return Equals(dblb);
+            if (immutable is ICacheLookup icdbl)
+                return Equals(icdbl);
 
-            if (other is DBLookupBase dblb)
-            {
-                result = result && ReferenceEquals(cdlu.DBConnection, dblb.DBConnection);
-            }
+            // If this return statement is reached, then only the
+            // keys have been compared; this is probably a bad thing.
+            return true;
+        }
 
-            return result;
+        internal bool Equals(CacheDBLookup other)
+        {
+            return ReferenceEquals(this, other) // Short-circuit when reference-equal
+                || Equals(other as ICacheLookup) && Equals(other as DBLookup);
         }
 
         public bool Equals(DBLookupBase other)
         {
             if (other == null) return false;
 
-            bool result = other.Equals(cdlu); // DBLookupBase.Equals(DBLookupBase)
-
-            if (other is IMutableLookup<ILookup> ext_iml)
-                return Equals(ext_iml.ImmutableCopy());
-
-            if (other is ICacheLookup cdbl)
-            {
-                result &= cdbl.BypassCache == BypassCache;
-                result &= cdbl.DontCacheResult == DontCacheResult;
-            }
-
-            return result;
+            return other.Equals(cdlu);
         }
 
         public bool Equals(ICacheLookup other)
         {
             if (other == null) return false;
-
-            // Unwrap mutables
-            if (other is IMutableLookup<DBLookupBase> ext_mutable_dblb)
-            {
-                if (!LookupManager.VerifyInstance(ext_mutable_dblb as IMutableLookup<ILookup>, out VerificationFlags flags))
-                    throw new CustomTypeFailedVerificationException(flags);
-
-                return Equals(ext_mutable_dblb.ImmutableCopy());
-            }
-            if (other is IMutableLookup<CacheDBLookup> ext_mutable_cdbl)
-            {
-                if (!LookupManager.VerifyInstance(ext_mutable_cdbl as IMutableLookup<ILookup>, out VerificationFlags flags))
-                    throw new CustomTypeFailedVerificationException(flags);
-            }
-            if (other is IMutableLookup<ICacheLookup> ext_mutable_ext_cdbl)
-            {
-            }
 
             string otherKey;
 
@@ -280,9 +330,21 @@ namespace DBInterface.CacheDB
                 otherKey.Equals(Key_Internal);
 
             if (other is DBLookupBase dblb)
-                result = result && dblb.Equals(this);
+                result &= dblb.Equals(this);
 
             return result;
+        }
+
+
+
+        CacheDBLookup IMutableLookup<CacheDBLookup>.ImmutableCopy()
+        {
+            return new CacheDBLookup(this);
+        }
+
+        bool IEquatable<CacheDBLookup>.Equals(CacheDBLookup other)
+        {
+            return Equals(other);
         }
 
         /// <summary>
