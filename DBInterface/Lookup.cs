@@ -12,9 +12,7 @@ namespace DBInterface
     /// </summary>
     public class Lookup: ILookup
     {
-        private const int Hashcode_XOR_Operand = 17;
-
-	    private string key;
+        private string key;
 
         internal Lookup(string _key)
         {
@@ -29,8 +27,8 @@ namespace DBInterface
 	    internal string Key_Internal { get { return key; } set { key = value; } }
 
         /// <summary>
-        /// Gets a copy of the lookup key, or returns null. Direct references to the
-	    /// lookup key itself cannot be obtained.
+        /// Gets a copy of the lookup key, or returns null (if key is null). References to the
+	    /// lookup key itself cannot be obtained externally.
         /// </summary>
         public string KeyCopy { get { return (key == null ? null : String.Copy(key)); } 
 	       	internal set { key = value == null ? null : String.Copy(value); } }
@@ -44,39 +42,24 @@ namespace DBInterface
         {
             if (other == null) return false;
 
-	    string otherKey;
+    	    string otherKey;
 
-	    // Apply Optimization:
-	    // If we are comparing to an internally-defined type (either Lookup or MutableLookup)
-	    // then we can avoid unnecessary key copying operations by using the internally-accessible
-	    // properties Unwrap_Immutable and Key_Internal.
-	    if (other is Lookup int_lu) 
-		    otherKey = int_lu.Key_Internal;
-	    else if (other is MutableLookup mu) 
-		    otherKey = mu.Unwrap_Immutable.Key_Internal;
-	    else otherKey = other.KeyCopy; // If we cannot infer a concrete type, then we'll have to use KeyCopy in order to compare keys.
+    	    // Apply Optimization:
+    	    // If we are comparing to an internally-defined type (either Lookup or MutableLookup)
+    	    // then we can avoid unnecessary key copying operations by using the internally-accessible
+    	    // properties Unwrap_Immutable and Key_Internal.
+    	    if (other is Lookup int_lu) 
+    		    otherKey = int_lu.Key_Internal;
+    	    else if (other is MutableLookup mu) 
+    		    otherKey = mu.Unwrap_Immutable.Key_Internal;
+    	    else otherKey = other.KeyCopy; // If we cannot infer a concrete type, then we'll have to use KeyCopy in order to compare keys.
 
             // If at least one is null, then return "are they both null?"
             if (Key_Internal == null || otherKey == null)
                 return (Key_Internal == null) && (otherKey == null);
 
-            // If neither is null, then compare equality
+            // If neither is null, then compare key value-equality
             return Key_Internal.Equals(otherKey);
-        }
-
-        public override bool Equals(object obj)
-        {
-            return ReferenceEquals(obj, this) // Short-circuit if reference-equal
-                  || Equals(obj as ILookup);
-        }
-
-        public override int GetHashCode()
-        {
-            int result = Hashcode_XOR_Operand;
-            if (Key_Internal != null)
-                result ^= Key_Internal.GetHashCode();
-
-            return result;
         }
     }
 
@@ -87,49 +70,45 @@ namespace DBInterface
     /// This class cannot be externally inherited, as it has no
     /// public constructor.
     /// </remarks>
-    public class MutableLookup: ILookup, IMutableLookup<ILookup>
+    public class MutableLookup: ILookup, IMutableLookup<ILookup>, IEquatable<MutableLookup>
     {
-        internal sealed class MutableLookup_BugDetectedException: ArgumentNullException
-        {
-            private static readonly string FBDEMessage = "A required argument was null in a call to a static internal method of MutableLookup; this probably means a bug in the caller's code";
-            public MutableLookup_BugDetectedException(string argumentName)
-                : base(argumentName, FBDEMessage) { }
-        }
-
         private const int Hashcode_XOR_Operand = 48;
 
         private readonly Lookup lu;
+        private string readOnlyKey;
 
         internal MutableLookup(MutableLookup other)
         {
             lu = other.lu;
+            readOnlyKey = lu.KeyCopy;
         }
 
         internal MutableLookup(string key = null)
         {
             lu = new Lookup(key);
+            readOnlyKey = lu.KeyCopy;
 	    }
 
 	    internal Lookup Unwrap_Immutable { get { return lu; } }
 
         public string KeyCopy
         {
-            get { return lu.KeyCopy; }
-            set { lu.KeyCopy = value; }
+            get { return readOnlyKey; }
+            set { lu.KeyCopy = readOnlyKey = value; }
         }
 
         /// <summary>
-        /// Copies (internal use only)
+        /// Copies
         /// </summary>
         /// <param name="original">(NOT NULL) Original</param>
         /// <returns>A newly-constructed copy</returns>
-        /// <exception cref="MutableLookup_BugDetectedException"><c>original</c> is <c>null</c>.</exception>
-        internal static MutableLookup Copy_Internal(MutableLookup original)
+        /// <exception cref="ArgumentNullException"><c>original</c> is <c>null</c>.</exception>
+        public static MutableLookup Copy(ILookup original)
         {
             if (original == null)
-                throw new MutableLookup_BugDetectedException(nameof(original));
+                throw new ArgumentNullException(nameof(original));
 
-            return new MutableLookup(original);
+            return new MutableLookup(original.KeyCopy);
         }
 
         /// <summary>
@@ -162,10 +141,21 @@ namespace DBInterface
             return new Lookup(this);
         }
 
+        /// <summary>
+        /// calls Lookup.Equals
+        /// </summary>
+        /// <param name="other">The <see cref="DBInterface.ILookup"/> to compare with the current <see cref="T:DBInterface.MutableLookup"/>.</param>
+        /// <returns><c>true</c> if the specified <see cref="DBInterface.ILookup"/> is equal to the current
+        /// <see cref="T:DBInterface.MutableLookup"/>; otherwise, <c>false</c>.</returns>
         public bool Equals(ILookup other)
         {
             // alias Lookup.Equals
-            return (ImmutableCopy() as Lookup).Equals(other);
+            return lu.Equals(other);
+        }
+
+        public bool Equals(MutableLookup other)
+        {
+            return lu.Key_Internal.Equals(other.lu.Key_Internal);
         }
     }
 

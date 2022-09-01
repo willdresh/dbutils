@@ -13,7 +13,8 @@ namespace DBInterface.CacheDB
     public sealed class MutableCacheDBLookup: 
         IMutableLookup<DBLookupBase>,
         IMutableLookup<ICacheLookup>, IMutableLookup<CacheDBLookup>, ICacheLookup,
-        IMutableLookup<ILookup>, ILookup
+        IMutableLookup<ILookup>, ILookup,
+        IEquatable<MutableCacheDBLookup>
     {
         public sealed class MCDBLCustomTypeFailedVerificationException : SecurityException
         {
@@ -242,30 +243,34 @@ namespace DBInterface.CacheDB
                 return int_mdbl.Unwrap_Immutable;
             if (other is MutableLookup int_ml)
                 return int_ml.Unwrap_Immutable;
-            if (other is IMutableLookup<CacheDBLookup> ext_mu_cdbl)
-            {
-                if (!VerifyInstance(ext_mu_cdbl, out VerificationFlags flags))
-                    throw new MCDBLCustomTypeFailedVerificationException("ext_mu_cdbl", ext_mu_cdbl, flags);
-                return ext_mu_cdbl.ImmutableCopy();
-            }
-            if (other is IMutableLookup<DBLookupBase> ext_mu_dblb)
-            {
-                if (!VerifyInstance(ext_mu_dblb, out VerificationFlags flags))
-                    throw new MCDBLCustomTypeFailedVerificationException("ext_mu_dblb", ext_mu_dblb, flags);
-                return ext_mu_dblb.ImmutableCopy();
-            }
-            if (other is IMutableLookup<ICacheLookup> ext_mu_icl)
-            {
-                if (!VerifyInstance(ext_mu_icl, out VerificationFlags flags))
-                    throw new MCDBLCustomTypeFailedVerificationException("ext_mu_icl", ext_mu_icl, flags);
-                return ext_mu_icl.ImmutableCopy();
-            }
+
+            // These aren't needed - all of them will fall under IMutableLookup<ILookup>
+            //if (other is IMutableLookup<CacheDBLookup> ext_mu_cdbl)
+            //{
+            //    if (!VerifyInstance(ext_mu_cdbl, out VerificationFlags flags))
+            //        throw new MCDBLCustomTypeFailedVerificationException("ext_mu_cdbl", ext_mu_cdbl, flags);
+            //    return ext_mu_cdbl.ImmutableCopy();
+            //}
+            //if (other is IMutableLookup<DBLookupBase> ext_mu_dblb)
+            //{
+            //    if (!VerifyInstance(ext_mu_dblb, out VerificationFlags flags))
+            //        throw new MCDBLCustomTypeFailedVerificationException("ext_mu_dblb", ext_mu_dblb, flags);
+            //    return ext_mu_dblb.ImmutableCopy();
+            //}
+            //if (other is IMutableLookup<ICacheLookup> ext_mu_icl)
+            //{
+            //    if (!VerifyInstance(ext_mu_icl, out VerificationFlags flags))
+            //        throw new MCDBLCustomTypeFailedVerificationException("ext_mu_icl", ext_mu_icl, flags);
+            //    return ext_mu_icl.ImmutableCopy();
+            //}
             if (other is IMutableLookup<ILookup> ext_mu_ilu)
             {
                 if (!VerifyInstance(ext_mu_ilu, out VerificationFlags flags))
                     throw new MCDBLCustomTypeFailedVerificationException("ext_mu_ilu", ext_mu_ilu, flags);
                 return ext_mu_ilu.ImmutableCopy();
             }
+
+
 
             return other;
         }
@@ -295,8 +300,8 @@ namespace DBInterface.CacheDB
             if (immutable is ICacheLookup icdbl)
                 return Equals(icdbl);
 
-            // If this return statement is reached, then only the
-            // keys have been compared; this is probably a bad thing.
+            // If this return statement is reached,
+            // then it is unknown type, and the keys are equal and not-null
             return true;
         }
 
@@ -343,6 +348,12 @@ namespace DBInterface.CacheDB
         bool IEquatable<CacheDBLookup>.Equals(CacheDBLookup other)
         {
             return Equals(other);
+        }
+
+        public bool Equals(MutableCacheDBLookup other)
+        {
+            return ReferenceEquals(other, this)
+                || other.cdlu.Equals(cdlu);
         }
 
         /// <summary>

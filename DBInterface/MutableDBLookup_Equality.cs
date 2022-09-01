@@ -31,12 +31,6 @@ namespace DBInterface
                 return int_mdbl.Unwrap_Immutable;
             if (other is MutableLookup int_ml)
                 return int_ml.Unwrap_Immutable;
-            if (other is IMutableLookup<DBLookupBase> ext_mu_dblb)
-            {
-                if (!VerifyInstance(ext_mu_dblb, out VerificationFlags flags))
-                    throw new CustomTypeFailedVerificationException("ext_mu_dblb", ext_mu_dblb, flags);
-                return ext_mu_dblb.ImmutableCopy();
-            }
             if (other is IMutableLookup<ILookup> ext_mu_ilu)
             {
                 if (!VerifyInstance(ext_mu_ilu, out VerificationFlags flags))
@@ -76,8 +70,11 @@ namespace DBInterface
             if (unwrapped is MutableDBLookup int_mdbl)
                 return Equals(int_mdbl);
 
-            if (unwrapped is DBLookupBase int_dblb)
-                return Equals(int_dblb);
+            if (unwrapped is DBLookup int_dbl)
+                return Equals(int_dbl);
+
+            if (unwrapped is DBLookupBase ext_dblb)
+                return Equals(ext_dblb);
 
             return ImmutableCopy_Internal().Equals(other);
         }
