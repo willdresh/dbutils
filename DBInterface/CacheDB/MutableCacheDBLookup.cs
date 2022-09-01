@@ -289,9 +289,9 @@ namespace DBInterface.CacheDB
             ILookup immutable = UnwrapMutables(other);
 
             if (immutable is CacheDBLookup cdbl)
-                return Equals(cdbl);
+                return cdbl.Equals(this);
             if (immutable is DBLookupBase dblb)
-                return Equals(dblb);
+                return dblb.Equals(this);
             if (immutable is ICacheLookup icdbl)
                 return Equals(icdbl);
 
@@ -334,8 +334,6 @@ namespace DBInterface.CacheDB
 
             return result;
         }
-
-
 
         CacheDBLookup IMutableLookup<CacheDBLookup>.ImmutableCopy()
         {

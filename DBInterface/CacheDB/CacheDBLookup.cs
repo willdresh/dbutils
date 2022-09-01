@@ -18,7 +18,8 @@ namespace DBInterface.CacheDB
     /// CacheDB Lookup. This class cannot be externally inherited, as it has no
     /// public constructors.
     /// </summary>
-    internal class CacheDBLookup: DBLookup, ICacheLookup, IEquatable<CacheDBLookup>
+    internal class CacheDBLookup: DBLookup, ICacheLookup,
+        IEquatable<CacheDBLookup>, IEquatable<ICacheLookup>
     {
         internal sealed class CacheDBLookupBugDetectedException: ArgumentNullException
         {
@@ -116,19 +117,18 @@ namespace DBInterface.CacheDB
                 other.DontCacheResult == DontCacheResult;
         }
 
-        public override bool Equals(object obj)
+        public bool Equals(ICacheLookup other)
         {
-            if (obj is CacheDBLookup)
-                return Equals(obj as CacheDBLookup);
-            return base.Equals(obj);
-        }
+            if (other is IMutableLookup<ICacheLookup> ext_mu_icl) {
+                if (!LookupManager.VerifyInstance(ext_mu_icl as IMutableLookup<ILookup>, out LookupManager.External_IMutableLookup_VerificationFlags flags))
+                    throw new SecurityException("Verification Failed in CacheDBLookup");
 
-        public override int GetHashCode()
-        {
-            return base.GetHashCode()
-                ^ (BypassCache ? Hashcode_XOR_Operand_BypassCache : 0)
-                ^ (DontCacheResult ? Hashcode_XOR_Operand_DontCacheResult : 0)
-                ^ Hashcode_Operand;
+                return Equals(ext_mu_icl.ImmutableCopy());
+            }
+
+            return base.Equals(other) &&
+                other.BypassCache == BypassCache &&
+                other.DontCacheResult == DontCacheResult;
         }
     }
 
