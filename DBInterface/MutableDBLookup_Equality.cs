@@ -24,7 +24,7 @@ namespace DBInterface
         /// then returns <c>other</c>.
         /// </returns>
         /// <param name="other">Other.</param>
-        /// <exception cref="CustomTypeFailedVerificationException"
+        /// <exception cref="CustomTypeFailedVerificationException"></exception>
         private ILookup UnwrapMutables(ILookup other)
         {
             if (other is MutableDBLookup int_mdbl)
