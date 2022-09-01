@@ -1,4 +1,8 @@
-﻿using System;
+﻿// LookupTests.cs
+// Will Dresh
+// w@dresh.app
+
+using System;
 using DBInterface;
 
 namespace DBInterface_XUnit_Tests
@@ -6,11 +10,12 @@ namespace DBInterface_XUnit_Tests
     internal class LookupTests
     {
         private Lookup lu;
-        private void NewLookupInstance()
+        private void NewLookupInstance(string newKey = null)
         {
             lu = null;
             throw new NotImplementedException();
         }
+
 
     }
 }
