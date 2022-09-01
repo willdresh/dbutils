@@ -67,7 +67,7 @@ namespace DBInterface.CacheDB
         }
 
         internal System.Data.IDbConnection DBConnection { get => cdlu.DBConnection; set => cdlu.DBConnection = value; }
-        internal string Key_Internal { get => cdlu.Key_Internal; set => cdlu.Key_Internal = value; }
+        internal string Key_Internal { get => cdlu.Key_Internal; }
         public string KeyCopy { get => cdlu.KeyCopy; set => cdlu.KeyCopy = value; }
         public bool BypassCache { get => cdlu.BypassCache; set => cdlu.BypassCache = value; }
         public bool DontCacheResult { get => cdlu.BypassCache; set => cdlu.DontCacheResult = value; }

@@ -27,7 +27,7 @@ namespace DBInterface
             KeyCopy = lu.Unwrap_Immutable.Key_Internal;
         }
 
-	    internal string Key_Internal { get { return key; } set { key = value; } }
+	    internal string Key_Internal { get { return key; } }
 
         /// <summary>
         /// Gets a copy of the lookup key, or returns null (if key is null). References to the
