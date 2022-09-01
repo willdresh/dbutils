@@ -3,3 +3,6 @@ DBInterface/obj
 packages/
 *.cs.swp
 .vs/
+DBInterface-XUnit-Tests/obj
+DBInterface-XUnit-Tests/bin
+
