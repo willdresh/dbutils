@@ -15,7 +15,7 @@ namespace DBInterface
         /// Custom type failed verification exception. This class cannot be inherited.
         /// This class cannot be publicly constructed.
         /// </summary>
-        protected sealed class CustomTypeFailedVerificationException: SecurityException
+        protected internal sealed class CustomTypeFailedVerificationException: SecurityException
         {
             private static readonly string CTFVEMessage = "A custom mutable instance failed internal integrity checks";
 
@@ -29,7 +29,7 @@ namespace DBInterface
         /// <summary>
         /// Lookup not permitted exception. This class cannot be inherited.
         /// </summary>
-        protected sealed class LookupNotPermittedException: OperationNotPermittedException
+        protected internal sealed class LookupNotPermittedException: OperationNotPermittedException
         {
             private static readonly string LookupNotPermittedMessage = "Policy prohibits lookup operation";
             public LookupNotPermittedException()
@@ -127,7 +127,7 @@ namespace DBInterface
         /// of <c>External_IMutableLookup_VerificationFlags</c>.
         /// </summary>
         [Flags]
-        protected internal enum External_IMutableLookup_VerificationFlags
+        public enum External_IMutableLookup_VerificationFlags
         {
             /// <summary>
             /// This flag indicates that the RTT of an IMutableLookup
@@ -227,13 +227,24 @@ namespace DBInterface
         /// <returns><c>true</c>, if the instance exhibits expected equality behavior.</returns>
         /// <param name="ext_Lookup">Ext lookup.</param>
         /// <param name="verificationResult">Verification result.</param>
+        /// <exception cref="ArgumentNullException"><c>ext_Lookup</c> is null</exception>
         private static bool Verify_External_IMutableLookup_ImmutableCopy_Equality
             (IMutableLookup<ILookup> ext_Lookup, ref External_IMutableLookup_VerificationFlags verificationResult)
         {
+            if (ext_Lookup == null) throw new ArgumentNullException(nameof(ext_Lookup));
+
             verificationResult |= External_IMutableLookup_VerificationFlags.TESTED_EQUALITY;
+
+
 
             ILookup copy = ext_Lookup.ImmutableCopy();
             bool identityError = false;
+            if (ReferenceEquals(ext_Lookup, copy))
+            {
+                identityError = true;
+                verificationResult |= External_IMutableLookup_VerificationFlags.ERR_COPY_REFERENCEEQUALS_ORIGINAL;
+            }
+
             if (!ext_Lookup.Equals(ext_Lookup)) // Compiler warning is OK
             {
                 identityError = true;
@@ -246,19 +257,22 @@ namespace DBInterface
                 verificationResult |= External_IMutableLookup_VerificationFlags.ERR_COPY_EQUALITY_NONIDENTICAL;
             }
 
-            if (ext_Lookup.Equals(copy))
-            {
-                if (copy.Equals(ext_Lookup))
-                {
-                    verificationResult |= External_IMutableLookup_VerificationFlags.EQUALITY_TEST_PASSED;
-                    return !identityError;
-                }
+            bool originalEqualsCopy = ext_Lookup.Equals(copy);
+            bool copyEqualsOriginal = copy.Equals(ext_Lookup);
 
-                verificationResult |= External_IMutableLookup_VerificationFlags.ERR_EQUALITY_NONCOMMUTATIVE;
+            if (originalEqualsCopy || copyEqualsOriginal)
+            {
+                if (originalEqualsCopy ^ copyEqualsOriginal)
+                    verificationResult |= External_IMutableLookup_VerificationFlags.ERR_EQUALITY_NONCOMMUTATIVE;
+                else
+                {
+                    // At this point this method's equality verification succeeds
+                    verificationResult |= External_IMutableLookup_VerificationFlags.EQUALITY_TEST_PASSED;
+                    return !identityError; // Identity error, in this case, should only happen due to reference-equality
+                }
             }
 
             verificationResult |= External_IMutableLookup_VerificationFlags.ERR_ORIGINAL_NOT_EQUALTO_COPY;
-
             return false;
         }
 
@@ -354,7 +368,7 @@ namespace DBInterface
             return false;
         }
 
-        protected static bool VerifyInstance(IMutableLookup<ILookup> ext_Lookup, out External_IMutableLookup_VerificationFlags flags)
+        protected internal static bool VerifyInstance(IMutableLookup<ILookup> ext_Lookup, out External_IMutableLookup_VerificationFlags flags)
         {
             flags = 0;
             if (Determine_IMutableLookup_RTT_is_Internal(ext_Lookup, ref flags))
@@ -364,7 +378,7 @@ namespace DBInterface
                 && Verify_External_IMutableLookup_ImmutableCopy_Equality(ext_Lookup, ref flags);
         }
 
-        protected static bool VerifyInstance(IMutableLookup<ILookup> ext_Lookup)
+        protected internal static bool VerifyInstance(IMutableLookup<ILookup> ext_Lookup)
         {
             return VerifyInstance(ext_Lookup, out External_IMutableLookup_VerificationFlags flags);
         }

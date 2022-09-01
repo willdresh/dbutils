@@ -123,18 +123,15 @@ namespace DBInterface.CacheDB
         /// <exception cref="ArgumentNullException"><c>query</c> is <c>null</c>.</exception>
         /// <exception cref="SecurityException">Runtime type of <c>query</c> is not an 
         /// appropriate internally-recognized type.</exception>
-        public static ILookupResult<ICacheDBLookup> GetFailureInstance(ICacheDBLookup query)
+        public static ILookupResult<ICacheLookup> GetFailureInstance(ICacheLookup query)
         {
             if (query == null)
                 throw new ArgumentNullException(nameof(query));
 
-            if (query is MutableDBLookup mutableDBLookup)
-                return GetFailureInstance_Internal(mutableDBLookup.Unwrap_Immutable);
-
             if (query is CacheDBLookup lookup)
-                return GetFailureInstance_Internal(lookup) as ILookupResult<ICacheDBLookup>;
+                return GetFailureInstance_Internal(lookup) as ILookupResult<ICacheLookup>;
 
-            if (query is IMutableLookup<ICacheDBLookup> external_mutableCacheDBLookup)
+            if (query is IMutableLookup<ICacheLookup> external_mutableCacheDBLookup)
             {
                 // Custom-Defined Type Mutability Verification Triggered
                 if (VerifyInstance(external_mutableCacheDBLookup as IMutableLookup<ILookup>, out External_IMutableLookup_VerificationFlags flags))
@@ -158,7 +155,7 @@ namespace DBInterface.CacheDB
             return CacheDBLookup.Build_Internal(this, query, bypassCache, dontCacheResult);
         }
 
-        public ICacheDBLookup BuildLookup(ILookup query, bool bypassCache = false, bool dontCacheResult = false)
+        public ICacheLookup BuildLookup(ILookup query, bool bypassCache = false, bool dontCacheResult = false)
         {
             return BuildLookup_Internal(query, bypassCache, dontCacheResult);
         }

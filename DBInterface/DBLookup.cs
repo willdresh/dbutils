@@ -12,15 +12,8 @@ namespace DBInterface
     /// DB Lookup. This class cannot be externally inherited, as it has no
     /// public constructors.
     /// </summary>
-    internal class DBLookup: DBLookupBase
+    internal partial class DBLookup: DBLookupBase
     {
-        internal sealed class DBLookupBugDetectedException : ArgumentNullException
-        {
-            private static readonly string FBDEMessage = "A required argument was null in a call to a static internal method of DBLookup; this probably means a bug in the caller's code";
-            public DBLookupBugDetectedException(string argumentName)
-                : base(argumentName, FBDEMessage) { }
-        }
-
         internal DBLookup(string key, System.Data.IDbConnection dbConnection)
             : base(key, dbConnection)
         { }
@@ -74,123 +67,6 @@ namespace DBInterface
                 throw new DBLookupBugDetectedException(nameof(other));
 
             return new DBLookup(other.Key_Internal, other.DBConnection);
-        }
-    }
-
-    /// <summary>
-    /// Mutable wrapper for <see cref="DBLookup"/>. This class cannot be
-    /// externally inherited, as it has no public constructors.
-    /// </summary>
-    public class MutableDBLookup: IMutableLookup<DBLookupBase>, IMutableLookup<ILookup>
-    {
-        private DBLookup dbl;
-
-        internal MutableDBLookup(string key = null, System.Data.IDbConnection dbConnection = null)
-        {
-            dbl = new DBLookup(key, dbConnection);
-        }
-
-        // DBConnection must never be made public to ensure integrity!
-        private IDbConnection DBConnection
-        {
-            get => dbl.DBConnection;
-            set => dbl.DBConnection = value;
-        }
-	
-    	internal DBLookup Unwrap_Immutable { get => dbl; }
-    	internal string Key_Internal { get => dbl.Key_Internal; set => dbl.Key_Internal = value; }
-    	public string KeyCopy { get => dbl.KeyCopy; set => dbl.KeyCopy = value; }
-
-        internal DBLookupBase ImmutableCopy_Internal()
-        {
-            return new DBLookup(this);
-        }
-
-        DBLookupBase IMutableLookup<DBLookupBase>.ImmutableCopy()
-        {
-            return ImmutableCopy_Internal();
-        }
-
-        public ILookup ImmutableCopy()
-        {
-            return ImmutableCopy_Internal();
-        }
-
-        public bool Equals(DBLookupBase dblb)
-    	{
-    		return ReferenceEquals(DBConnection, dblb.DBConnection)
-    			&& (this.Key_Internal == null ? dblb.Key_Internal == null : this.Key_Internal.Equals(dblb.Key_Internal));
-    	}
-
-        public bool Equals(ILookup other)
-        {
-            if (ReferenceEquals(this, other))
-                return true;
-
-            if (other is MutableDBLookup int_mdbl) 
-		        return Equals(int_mdbl.Unwrap_Immutable as DBLookupBase);
-	        if (other is DBLookupBase int_dblb)
-                return Equals(int_dblb);
-	        if (other is IMutableLookup<DBLookupBase> ext_mdbl)
-                return Equals(ext_mdbl.ImmutableCopy());
-
-            return ImmutableCopy_Internal().Equals(other);
-        }
-    }
-
-    /// <summary>
-    /// DB Lookup result.
-    /// </summary>
-    /// <remarks>
-    /// This class cannot be externally inherited, as it has no public constructors.
-    /// </remarks>
-    internal partial class DBLookupResult: LookupResult, ILookupResult<DBLookupBase>
-    {
-        internal DBLookupResult(DBLookupBase query, object response)
-            : base(query, response)
-        { }
-
-        public new DBLookupBase Query { get { return base.Query as DBLookupBase; } }
-
-        /// <summary>
-        /// Factory method
-        /// </summary>
-        /// <returns>A new instance</returns>
-        /// <param name="manager">(NOT NULL) Manager.</param>
-        /// <param name="query">(NOT NULL) Query.</param>
-        /// <param name="response">(nullable) Response.</param>
-        /// <exception cref="ArgumentNullException">
-        ///     Either <c>manager</c> is <c>null</c>, <c>query</c> is <c>null</c>,
-        ///     or both <c>manager</c> and <c>query</c> are <c>null</c>.
-        /// </exception>
-        public static ILookupResult<DBLookupBase> Build(DBLookupManager manager, ILookup query, object response)
-        {
-            if (manager == null)
-                throw new ArgumentNullException(nameof(manager));
-            if (query == null)
-                throw new ArgumentNullException(nameof(query));
-
-            return new DBLookupResult(DBLookup.Build(manager, query), response);
-        }
-
-        /// <summary>
-        /// Builds an instance from a query and response (internal use only)
-        /// </summary>
-        /// <returns>A new instance</returns>
-        /// <param name="query">(NOT NULL) Query.</param>
-        /// <param name="response">(nullable) Response.</param>
-        /// <exception cref="DBLookupResult_BugDetectedException"><c>query</c> is <c>null</c>.</exception>
-        internal static DBLookupResult Build_Internal(DBLookupBase query, object response)
-        {
-            if (query == null)
-                throw new DBLookupResult_BugDetectedException(nameof(query));
-
-            return new DBLookupResult(query, response);
-        }
-
-        internal static DBLookupResult Build_Internal(DBLookupBase query, DataTable result)
-        {
-            throw new NotImplementedException();
         }
     }
 }

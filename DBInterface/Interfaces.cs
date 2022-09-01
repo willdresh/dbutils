@@ -31,20 +31,6 @@ namespace DBInterface
         bool DontCacheResult { get; }
     }
 
-    public interface IDBLookup: ILookup
-    {
-        /// <summary>
-        /// Gets the DB Connection
-        /// </summary>
-        /// <value>The DBConnection</value>
-        System.Data.IDbConnection DBConnection { get; }
-    }
-
-    /// <summary>
-    /// Simply an alias for the intersection of ICacheLookup and IDBLookup
-    /// </summary>
-    public interface ICacheDBLookup : ICacheLookup, IDBLookup { }
-
     public interface ILookupResult<T>
         where T: ILookup
     {

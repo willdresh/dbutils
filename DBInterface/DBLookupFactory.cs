@@ -29,8 +29,8 @@ namespace DBInterface
             if (query == null)
                 return new MutableDBLookup(null, mgr.connection);
 
-            if (query is MutableDBLookup int_mutable_query)
-                return BuildMutableLookup(mgr, int_mutable_query.Unwrap_Immutable);
+            //if (query is MutableDBLookup int_mutable_query)
+                //return BuildMutableLookup(mgr, int_mutable_query.Unwrap_Immutable);
             if (query is IMutableLookup<ILookup> ext_mutable_query)
             {
                 return BuildMutableLookup(mgr, new Lookup(ext_mutable_query.ImmutableCopy().KeyCopy));
