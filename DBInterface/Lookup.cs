@@ -7,7 +7,10 @@ using System;
 namespace DBInterface
 {
     /// <summary>
-    /// Lookup. This class cannot be externally inherited, as it has no
+    /// Represents a lookup operation, which has a read-only string key.
+    /// Instances of Lookup own the only reference to their key, and this reference is never
+    /// exposed, even internally - thus providing immutability.
+    /// This class cannot be externally inherited, as it has no
     /// public constructors.
     /// </summary>
     public class Lookup: ILookup
@@ -21,10 +24,10 @@ namespace DBInterface
 
         internal Lookup(MutableLookup lu)
         {
-            KeyCopy = lu.Unwrap_Immutable.Key_Internal;
+            KeyCopy = lu.Unwrap_Immutable.ReadOnlyKey;
         }
 
-	    internal string Key_Internal { get { return key; } set { key = value; } }
+	    internal string ReadOnlyKey { get { return key; } }
 
         /// <summary>
         /// Gets a copy of the lookup key, or returns null (if key is null). References to the
@@ -38,7 +41,7 @@ namespace DBInterface
         /// </summary>
         /// <returns><c>true</c> if <c>other</c> has a key which is value-equal to the key of the current
         /// <see cref="Lookup"/>; otherwise, <c>false</c>.</returns>
-        public virtual bool Equals(ILookup other)
+        public bool Equals(ILookup other)
         {
             if (other == null) return false;
 
@@ -49,17 +52,29 @@ namespace DBInterface
     	    // then we can avoid unnecessary key copying operations by using the internally-accessible
     	    // properties Unwrap_Immutable and Key_Internal.
     	    if (other is Lookup int_lu) 
-    		    otherKey = int_lu.Key_Internal;
+    		    otherKey = int_lu.ReadOnlyKey;
     	    else if (other is MutableLookup mu) 
-    		    otherKey = mu.Unwrap_Immutable.Key_Internal;
+    		    otherKey = mu.Unwrap_Immutable.ReadOnlyKey;
     	    else otherKey = other.KeyCopy; // If we cannot infer a concrete type, then we'll have to use KeyCopy in order to compare keys.
 
             // If at least one is null, then return "are they both null?"
-            if (Key_Internal == null || otherKey == null)
-                return (Key_Internal == null) && (otherKey == null);
+            if (ReadOnlyKey == null || otherKey == null)
+                return (ReadOnlyKey == null) && (otherKey == null);
 
             // If neither is null, then compare key value-equality
-            return Key_Internal.Equals(otherKey);
+            return ReadOnlyKey.Equals(otherKey);
+        }
+
+        /// <summary>
+        /// Build a <see cref="Lookup"/> instance.
+        /// </summary>
+        /// <param name="key">
+        /// (nullable) The lookup key, which will be COPIED into the instance returned by this method.
+        /// </param>
+        /// <returns>A newly-created instance of <see cref="Lookup"/> whose key is identical (String.Equals) to the supplied key</returns>
+        public static Lookup Build(string key = null)
+        {
+            return new Lookup(key);
         }
     }
 
@@ -155,7 +170,7 @@ namespace DBInterface
 
         public bool Equals(MutableLookup other)
         {
-            return lu.Key_Internal.Equals(other.lu.Key_Internal);
+            return lu.ReadOnlyKey.Equals(other.lu.ReadOnlyKey);
         }
     }
 

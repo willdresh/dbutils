@@ -38,7 +38,7 @@ namespace DBInterface
 
             // Avoid an extra copy operation when working with internally-defined types
             if (query is Lookup int_query)
-                return new MutableDBLookup(int_query.Key_Internal);
+                return new MutableDBLookup(int_query.ReadOnlyKey);
             return new MutableDBLookup(query.KeyCopy, mgr.connection);
         }
 

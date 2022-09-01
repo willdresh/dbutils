@@ -67,7 +67,7 @@ namespace DBInterface
             set => dbl.DBConnection = value;
         }
 
-        internal string Key_Internal { get => dbl.Key_Internal; set => dbl.Key_Internal = value; }
+        internal string ReadOnlyKey { get => dbl.ReadOnlyKey; }
         public string KeyCopy { get => dbl.KeyCopy; set => dbl.KeyCopy = value; }
 
     }

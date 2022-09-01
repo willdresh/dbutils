@@ -15,7 +15,7 @@ namespace DBInterface
             IDbTransaction xaction = connection.BeginTransaction();
             IDbCommand command = connection.CreateCommand();
             command.Transaction = xaction;
-            command.CommandText = query.Key_Internal;
+            command.CommandText = query.ReadOnlyKey;
             IDataReader reader = command.ExecuteReader();
             DataTable result = new DataTable();
             result.Load(reader);

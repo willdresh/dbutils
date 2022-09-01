@@ -35,7 +35,7 @@ namespace DBInterface.Cache
             {
                 if (query == null) throw new NullQueryException();
                 if (query is Lookup int_query)
-                    ValidateParams(int_query.Key_Internal);
+                    ValidateParams(int_query.ReadOnlyKey);
                 else ValidateParams(query.KeyCopy);
             }
 
@@ -59,7 +59,7 @@ namespace DBInterface.Cache
             {
                 ValidateParams(query);
                 if (query is Lookup int_query)
-                    return new LookupResult(query, cacheManager.Get(int_query.Key_Internal));
+                    return new LookupResult(query, cacheManager.Get(int_query.ReadOnlyKey));
 
                 return new LookupResult(query, cacheManager.Get(query.KeyCopy));
             }
@@ -72,7 +72,7 @@ namespace DBInterface.Cache
             internal bool CacheContains_Internal(Lookup query)
             {
                 ValidateParams(query);
-                return CacheContains(query.Key_Internal);
+                return CacheContains(query.ReadOnlyKey);
             }
 
         /// <summary>
@@ -106,7 +106,7 @@ namespace DBInterface.Cache
                 ValidateParams(entry);
             ILookup query = entry.Query;
             if (query is Lookup int_query)
-                cacheManager.Put(int_query.Key_Internal, entry.Response);
+                cacheManager.Put(int_query.ReadOnlyKey, entry.Response);
             else
                 cacheManager.Put(query.KeyCopy, entry.Response);
             }

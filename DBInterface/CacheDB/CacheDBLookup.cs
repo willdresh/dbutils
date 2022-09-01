@@ -1,6 +1,6 @@
-﻿// // CacheLookup.cs
-// // Will Dresh
-// // w@dresh.app
+﻿// CacheDBLookup.cs
+// Will Dresh
+// w@dresh.app
 
 using System;
 using System.Data;
@@ -33,7 +33,7 @@ namespace DBInterface.CacheDB
         private const int Hashcode_XOR_Operand_DontCacheResult = 8;
 
         internal CacheDBLookup(DBLookup dbLookup, bool bypassCache, bool dontCacheResult)
-            : base(dbLookup.Key_Internal, dbLookup.DBConnection)
+            : base(dbLookup.ReadOnlyKey, dbLookup.DBConnection)
         {
             BypassCache = bypassCache;
             DontCacheResult = dontCacheResult;
@@ -81,7 +81,7 @@ namespace DBInterface.CacheDB
                 throw new CacheDBLookupBugDetectedException(nameof(mgr));
 
             if (query is DBLookupBase dBLookupBase)
-                return new CacheDBLookup(dBLookupBase.Key_Internal, mgr.connection, bypassCache, dontCacheResult);
+                return new CacheDBLookup(dBLookupBase.ReadOnlyKey, mgr.connection, bypassCache, dontCacheResult);
 
             return new CacheDBLookup(query.KeyCopy, mgr.connection, bypassCache, dontCacheResult);
         }
