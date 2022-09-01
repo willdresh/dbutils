@@ -27,7 +27,7 @@ namespace DBInterface
         }
 
         internal DBLookup(MutableDBLookup other)
-            : base(other.Key_Internal)
+            : base(other.ReadOnlyKey)
         {
             cnx = other.Unwrap_Immutable.DBConnection;
         }
@@ -49,7 +49,7 @@ namespace DBInterface
 
             // Try to avoid calling KeyCopy by using interal reference, if possible
             string resultKey = (query is Lookup int_query) ? 
-                int_query.Key_Internal : query?.KeyCopy;
+                int_query.ReadOnlyKey : query?.KeyCopy;
 
             return new DBLookup(resultKey, mgr.connection);
         }
@@ -67,7 +67,7 @@ namespace DBInterface
             if (other == null)
                 throw new DBLookupBugDetectedException(nameof(other));
 
-            return new DBLookup(other.Key_Internal, other.DBConnection);
+            return new DBLookup(other.ReadOnlyKey, other.DBConnection);
         }
     }
 }

@@ -67,7 +67,7 @@ namespace DBInterface.CacheDB
         }
 
         internal System.Data.IDbConnection DBConnection { get => cdlu.DBConnection; set => cdlu.DBConnection = value; }
-        internal string Key_Internal { get => cdlu.Key_Internal; }
+        internal string Key_Internal { get => cdlu.ReadOnlyKey; }
         public string KeyCopy { get => cdlu.KeyCopy; set => cdlu.KeyCopy = value; }
         public bool BypassCache { get => cdlu.BypassCache; set => cdlu.BypassCache = value; }
         public bool DontCacheResult { get => cdlu.BypassCache; set => cdlu.DontCacheResult = value; }
@@ -84,7 +84,7 @@ namespace DBInterface.CacheDB
             if (query == null)
                 throw new ArgumentNullException(nameof(query));
 
-            return new MutableCacheDBLookup(query.Key_Internal, query.DBConnection, bypassCache, dontCacheResult);
+            return new MutableCacheDBLookup(query.ReadOnlyKey, query.DBConnection, bypassCache, dontCacheResult);
         }
 
         /// <summary>
@@ -101,7 +101,7 @@ namespace DBInterface.CacheDB
 
             string lookupKey =
                 (lookup is Lookup int_lookup ?
-                    int_lookup.Key_Internal : 
+                    int_lookup.ReadOnlyKey : 
                     (lookup == null ?
                         null :
                     lookup.KeyCopy)
@@ -128,7 +128,7 @@ namespace DBInterface.CacheDB
             if (lookup == null)
                 throw new ArgumentNullException(nameof(lookup));
 
-            return new MutableCacheDBLookup(lookup.Key_Internal, lookup.DBConnection, lookup.BypassCache, lookup.DontCacheResult);
+            return new MutableCacheDBLookup(lookup.ReadOnlyKey, lookup.DBConnection, lookup.BypassCache, lookup.DontCacheResult);
         }
 
         /// <summary>
@@ -143,14 +143,14 @@ namespace DBInterface.CacheDB
         public static IMutableLookup<ICacheLookup> Build_Mutable_Copy(ICacheLookup lookup)
         {
             if (lookup is DBLookupBase dblb)
-                return new MutableCacheDBLookup(dblb.Key_Internal, dblb.DBConnection, lookup.BypassCache, lookup.DontCacheResult);
+                return new MutableCacheDBLookup(dblb.ReadOnlyKey, dblb.DBConnection, lookup.BypassCache, lookup.DontCacheResult);
 
             throw new InternalInstanceExpectedException();
         }
 
         internal static MutableCacheDBLookup Build_Mutable_Copy_Internal(DBLookupBase lookup, bool bypassCache = false, bool dontCacheResult = false)
         {
-            return new MutableCacheDBLookup(lookup.Key_Internal, lookup.DBConnection, bypassCache, dontCacheResult);
+            return new MutableCacheDBLookup(lookup.ReadOnlyKey, lookup.DBConnection, bypassCache, dontCacheResult);
         }
 
         #endregion
@@ -194,7 +194,7 @@ namespace DBInterface.CacheDB
         /// </returns>
         DBLookupBase IMutableLookup<DBLookupBase>.ImmutableCopy()
         {
-            return new CacheDBLookup(cdlu.Key_Internal, cdlu.DBConnection, cdlu.BypassCache, cdlu.DontCacheResult);
+            return new CacheDBLookup(cdlu.ReadOnlyKey, cdlu.DBConnection, cdlu.BypassCache, cdlu.DontCacheResult);
         }
 
         /// <summary>
@@ -282,13 +282,13 @@ namespace DBInterface.CacheDB
             // If we are using an internal type derived from Lookup,
             //  then use our internal-only accessors to speed up key comparison
             string otherKey = (other is Lookup int_other ?
-                int_other.Key_Internal :
+                int_other.ReadOnlyKey :
                 other.KeyCopy);
 
-            if (cdlu.Key_Internal == null) {
+            if (cdlu.ReadOnlyKey == null) {
                 return otherKey == null;
             }
-            if (!cdlu.Key_Internal.Equals(otherKey))
+            if (!cdlu.ReadOnlyKey.Equals(otherKey))
                 return false;
 
             ILookup immutable = UnwrapMutables(other);
@@ -326,7 +326,7 @@ namespace DBInterface.CacheDB
 
             // Avoid an extraneous copy operation when working with internally-defined types
             if (other is CacheDBLookup cdbl)
-                otherKey = cdbl.Key_Internal;
+                otherKey = cdbl.ReadOnlyKey;
             else
                 otherKey = other.KeyCopy;
 
