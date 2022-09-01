@@ -5,7 +5,8 @@ using System;
 namespace DBInterface
 {
     public sealed partial class MutableDBLookup
-        :IMutableLookup<DBLookupBase>, IMutableLookup<ILookup>, IEquatable<MutableDBLookup>
+        :IMutableLookup<DBLookupBase>, IMutableLookup<ILookup>, IEquatable<MutableDBLookup>,
+        ILookup
     {
 
 

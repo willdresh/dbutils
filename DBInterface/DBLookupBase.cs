@@ -17,7 +17,7 @@ namespace DBInterface
     /// Implements custom equality behavior by overriding <c>System.Object.Equals(object)</c>.
     /// </remarks>
     /// <seealso cref="DBLookupBase.Equals(object)"/>
-    public abstract class DBLookupBase: Lookup, IEquatable<DBLookupBase>
+    public abstract class DBLookupBase: Lookup, IEquatable<DBLookupBase>, ILookup
     {
         private const int Hashcode_XOR_Operand = 2;
 
