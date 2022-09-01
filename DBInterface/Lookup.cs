@@ -7,7 +7,10 @@ using System;
 namespace DBInterface
 {
     /// <summary>
-    /// Lookup. This class cannot be externally inherited, as it has no
+    /// Represents a lookup operation, which has a read-only string key.
+    /// Instances of Lookup own the only reference to their key, and this reference is never
+    /// exposed, even internally - thus providing immutability.
+    /// This class cannot be externally inherited, as it has no
     /// public constructors.
     /// </summary>
     public class Lookup: ILookup
@@ -60,6 +63,18 @@ namespace DBInterface
 
             // If neither is null, then compare key value-equality
             return Key_Internal.Equals(otherKey);
+        }
+
+        /// <summary>
+        /// Build a <see cref="Lookup"/> instance.
+        /// </summary>
+        /// <param name="key">
+        /// (nullable) The lookup key, which will be COPIED into the instance returned by this method.
+        /// </param>
+        /// <returns>A newly-created instance of <see cref="Lookup"/> whose key is identical (String.Equals) to the supplied key</returns>
+        public static Lookup Build(string key = null)
+        {
+            return new Lookup(key);
         }
     }
 
