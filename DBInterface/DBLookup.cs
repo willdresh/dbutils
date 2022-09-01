@@ -1,6 +1,9 @@
-﻿// // DBLookup.cs
-// // Will Dresh
-// // w@dresh.app
+﻿// DBLookup.cs
+// Will Dresh
+// w@dresh.app
+
+// Testing edit from Visual Studio! 20220901
+// See if the git repo is configured properly...
 
 using System;
 using System.Data;
