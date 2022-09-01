@@ -37,7 +37,7 @@ namespace DBInterface
         /// Implements deep value-equality between Lookup objects
         /// </summary>
         /// <returns><c>true</c> if <c>other</c> has a key which is value-equal to the key of the current
-        /// <see cref="DBInterface.Lookup"/>; otherwise, <c>false</c>.</returns>
+        /// <see cref="Lookup"/>; otherwise, <c>false</c>.</returns>
         public virtual bool Equals(ILookup other)
         {
             if (other == null) return false;

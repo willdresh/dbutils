@@ -14,22 +14,20 @@ namespace DBInterface
     /// </summary>
     internal partial class DBLookup: DBLookupBase
     {
+        private System.Data.IDbConnection cnx;
+        internal override IDbConnection DBConnection { get => cnx; set => cnx = value; }
+
         internal DBLookup(string key, System.Data.IDbConnection dbConnection)
-            : base(key, dbConnection)
-        { }
+            : base(key)
+        {
+            cnx = dbConnection;
+        }
 
         internal DBLookup(MutableDBLookup other)
-            : base(other.Key_Internal, other.Unwrap_Immutable.DBConnection)
-        { }
-
-        /// <summary>
-        /// Try to avoid using this constructor as it needs
-        /// two calls to ImmutableCopy(). Other constructors for this class
-        /// do not need to create any copies.
-        /// </summary>
-     //   internal DBLookup(IMutableLookup<DBLookupBase> other)
-    	//	:base(other.ImmutableCopy().Key_Internal, other.ImmutableCopy().DBConnection)
-    	//{ }
+            : base(other.Key_Internal)
+        {
+            cnx = other.Unwrap_Immutable.DBConnection;
+        }
 
         /// <summary>
         /// Build an immutable query for use with the supplied manager.
@@ -40,14 +38,14 @@ namespace DBInterface
         /// A newly-constructed immutable instance of <see cref="DBLookup"/>
         /// which <c>mgr</c> can use to perform lookups
         /// </returns>
-        internal static DBLookup Build(DBLookupManager mgr, ILookup query)
+        /// <exception cref="ArgumentNullException"><c>mgr</c> is <c>null</c>.</exception>
+        public static DBLookup Build(DBLookupManager mgr, ILookup query)
         {
             if (mgr == null)
-                throw new DBLookupBugDetectedException(nameof(mgr));
-            if (query == null)
-                throw new ArgumentNullException(nameof(query));
+                throw new ArgumentNullException(nameof(mgr));
 
-            string resultKey = (query is Lookup int_query) ? // Try to avoid calling KeyCopy by using interal reference, if possible
+            // Try to avoid calling KeyCopy by using interal reference, if possible
+            string resultKey = (query is Lookup int_query) ? 
                 int_query.Key_Internal : query?.KeyCopy;
 
             return new DBLookup(resultKey, mgr.connection);
