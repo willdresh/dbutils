@@ -38,7 +38,7 @@ namespace DBInterface
         /// </summary>
         /// <returns><c>true</c> if <c>other</c> has a key which is value-equal to the key of the current
         /// <see cref="Lookup"/>; otherwise, <c>false</c>.</returns>
-        public virtual bool Equals(ILookup other)
+        public bool Equals(ILookup other)
         {
             if (other == null) return false;
 
