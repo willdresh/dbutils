@@ -1,6 +1,6 @@
-﻿// // Lookup.cs
-// // Will Dresh
-// // w@dresh.app
+﻿// Lookup.cs
+// Will Dresh
+// w@dresh.app
 
 using System;
 
