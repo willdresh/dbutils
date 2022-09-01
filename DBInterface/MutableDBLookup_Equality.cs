@@ -16,7 +16,7 @@ namespace DBInterface
             => LookupManager.VerifyInstance(ext_mu_ext_lu, out flags);
 
         /// <summary>
-        /// Unwraps the mutables.
+        /// Unwraps the mutables. Triggers verification for externally-defined types.
         /// </summary>
         /// <returns>
         /// An immutable copy, if the instance passed in was a mutable.
@@ -47,7 +47,6 @@ namespace DBInterface
             return other;
         }
 
-
         public bool Equals(DBLookupBase dblb)
         {
             return dblb.Equals(this.Unwrap_Immutable);
@@ -72,20 +71,13 @@ namespace DBInterface
             if (ReferenceEquals(this, other))
                 return true;
 
-            if (other is MutableDBLookup int_mdbl)
+            var unwrapped = UnwrapMutables(other);
+
+            if (unwrapped is MutableDBLookup int_mdbl)
                 return Equals(int_mdbl);
 
-            if (other is DBLookupBase int_dblb)
+            if (unwrapped is DBLookupBase int_dblb)
                 return Equals(int_dblb);
-
-            var unwrapped = UnwrapMutables(other);
-            if (other is IMutableLookup<ILookup> ext_ilu)
-            {
-                if (!LookupManager.VerifyInstance(ext_ilu, out VerificationFlags flags))
-                    throw new CustomTypeFailedVerificationException(flags);
-
-                return Equals(ext_ilu.ImmutableCopy());
-            }
 
             return ImmutableCopy_Internal().Equals(other);
         }
