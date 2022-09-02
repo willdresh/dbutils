@@ -175,7 +175,7 @@ namespace DBInterface
         /// <param name="original">(NOT NULL) Original</param>
         /// <returns>A newly-constructed copy</returns>
         /// <exception cref="ArgumentNullException"><c>original</c> is <c>null</c>.</exception>
-        public static MutableLookup Copy(ILookup original)
+        public static MutableLookup BuildCopy(ILookup original)
         {
             if (original == null)
                 throw new ArgumentNullException(nameof(original));
@@ -209,20 +209,34 @@ namespace DBInterface
         /// <param name="other">The <see cref="DBInterface.ILookup"/> to compare with the current <see cref="T:DBInterface.MutableLookup"/>.</param>
         /// <returns><c>true</c> if the specified <see cref="DBInterface.ILookup"/> is equal to the current
         /// <see cref="T:DBInterface.MutableLookup"/>; otherwise, <c>false</c>.</returns>
+        /// <exception cref="ArgumentNullException"><c>other</c> is <c>null</c>.</exception>
         public bool Equals(ILookup other)
         {
+            if (other == null)
+                throw new ArgumentNullException(nameof(other));
+
             // alias Lookup.Equals
             return lu.Equals(other);
         }
 
+        /// <summary>
+        /// Check if two instances are value-equal
+        /// </summary>
+        /// <param name="other">The other instance</param>
+        /// <returns><c>true</c> if the two instances are value-equal; otherwise, <c>false</c>.</returns>
+        /// <exception cref="ArgumentNullException"><c>other</c> is <c>null</c>.</exception>
         public bool Equals(MutableLookup other)
         {
             if (other == null)
                 throw new ArgumentNullException(nameof(other));
-            else if (lu.ReadOnlyKey == null)
-                return other.KeyCopy == null;
 
-            return lu.ReadOnlyKey.Equals(other.lu.ReadOnlyKey);
+            string origKey = lu.ReadOnlyKey,
+                copyKey = other.lu.ReadOnlyKey;
+
+            if (origKey == null)
+                return copyKey == null;
+
+            return origKey.Equals(copyKey);
         }
     }
 
