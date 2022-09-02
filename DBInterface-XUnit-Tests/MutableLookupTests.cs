@@ -79,9 +79,19 @@ namespace DBInterface_XUnit_Tests
         }
 
         [Theory]
+        [InlineData("Test Key")]
+        [InlineData(null)]
+        public void Equals_Self(string key)
+        {
+            MutableLookup test = MutableLookupBuilder(key);
+
+            Assert.True(test.Equals(test));
+        }
+
+        [Theory]
         [InlineData("Test Key: Equals_ImmutableCopy_Equals_Original")]
         [InlineData(null)]
-        public void Equals_ImmutableCopy_Equals_this(string? key)
+        public void Equals_ImmutableCopy_EqualTo_this(string key)
         {
             MutableLookup test = MutableLookupBuilder(key);
 
@@ -106,6 +116,7 @@ namespace DBInterface_XUnit_Tests
             Assert.False(ReferenceEquals(testKey, test.KeyCopy));
         }
 
+        [Fact]
         public void ReadOnlyKey_Transformation_Applied_To_ReadOnlyKey()
         {
             const string testConst = "test";
