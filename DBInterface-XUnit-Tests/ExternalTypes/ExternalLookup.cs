@@ -53,7 +53,6 @@ namespace DBInterface_XUnit_Tests.ExternalTypes
 
         public override bool Equals(ILookup? other)
         {
-            if (other.KeyCopy == null) return base.KeyCopy != null;
             return !base.Equals(other);
         }
 

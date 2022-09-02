@@ -232,3 +232,15 @@ namespace DBInterface
         }
     }
 }
+
+namespace DBInterface.Cache
+{
+    partial class CacheFunctionProvider
+    {
+        public sealed class NullKeyException : IllegalCacheOperationException
+        { }
+
+        public sealed class NullQueryException : IllegalCacheOperationException
+        { }
+    }
+}

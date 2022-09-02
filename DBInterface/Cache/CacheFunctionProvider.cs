@@ -9,13 +9,8 @@ using CacheManager.Core;
 namespace DBInterface.Cache
 {
     
-        public sealed class CacheFunctionProvider: ILookupProvider<ILookup>
+        public sealed partial class CacheFunctionProvider: ILookupProvider<ILookup>
         {
-            public sealed class NullKeyException : IllegalCacheOperationException
-            { }
-
-            public sealed class NullQueryException : IllegalCacheOperationException
-            { }
 
             private readonly ICacheManager<Object> cacheManager;
 
