@@ -101,9 +101,32 @@ namespace DBInterface_XUnit_Tests
         public void Build_KeyCopy_NotReferenceEqualTo_Build_Parameter()
         {
             string testKey = "Test Key: MutableLookup.Build returns an instance whose KeyCopy is NOT reference-equal to the parameter";
-            MutableLookup test = MutableLookup.Build(testKey);
+            MutableLookup test = MutableLookupBuilder(testKey);
 
-            Assert.False(ReferenceEquals(testKey, test.Key));
+            Assert.False(ReferenceEquals(testKey, test.KeyCopy));
+        }
+
+        [Fact]
+        public void ReadOnlyKey_Transformation_NotApplied_To_ImmutableCopy()
+        {
+            const string testConst = "test";
+
+            string testKey = String.Copy(testConst);
+            MutableLookup test = MutableLookupBuilder(testKey);
+            string readOnlyKey = test.GetReadOnlyKey(); // ReferenceEquals(testKey, readOnlyKey) is asserted by Build_ReadOnlyKey_ReferenceEqualTo_Build_Parameter
+
+            readOnlyKey += " - transformation applied"; // This operation violates the intended purpose of MutableLookup.ReadOnlyKey()
+
+            Assert.False(test.ImmutableCopy().KeyCopy.Equals(readOnlyKey));
+        }
+
+        [Fact]
+        public void Build_ReadOnlyKey_ReferenceEqualTo_Build_Parameter()
+        {
+            string testKey = "Test Key: MutableLookup.Build returns an instance whose ReadOnlyKey is reference-equal to the parameter";
+            MutableLookup test = MutableLookupBuilder(testKey);
+
+            Assert.True(ReferenceEquals(testKey, test.GetReadOnlyKey()));
         }
     }
 }

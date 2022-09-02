@@ -117,11 +117,10 @@ namespace DBInterface
         /// wherever possible for best performance.<br />
         /// </summary>
         /// <remarks>
-        /// No transformations should be applied to
+        /// The reference exposed by this method 
         /// </remarks>
-        public string Key {
-            get => readOnlyKey;
-            set => this.KeyCopy = value;
+        public string GetReadOnlyKey() {
+            return readOnlyKey;
         }
 
         /// <summary>
@@ -131,7 +130,7 @@ namespace DBInterface
         /// Thus, every call to <c>MutableLookup.KeyCopy</c> - be it a <c>get</c> or a <c>set</c> -
         /// results in a call to <see cref="String.Copy(string)"/>.<br />
         /// <br />
-        /// To improve performance, <see cref="MutableLookup.Key.get" /> may be used instead of
+        /// To improve performance, <see cref="MutableLookup.GetReadOnlyKey()" /> may be used instead of
         /// <c>MutableLookup.KeyCopy.get</c> in order to avoid a call to <c>String.Copy(string)</c>.
         /// </summary>
         public string KeyCopy
