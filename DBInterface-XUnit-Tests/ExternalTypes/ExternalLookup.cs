@@ -3,6 +3,7 @@ using System;
 
 namespace DBInterface_XUnit_Tests.ExternalTypes
 {
+#pragma warning disable CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
     internal class ExternalLookup: ILookup, IEquatable<ILookup>
     {
         Lookup lu;
@@ -61,4 +62,5 @@ namespace DBInterface_XUnit_Tests.ExternalTypes
             return !base.Equals(obj);
         }
     }
+#pragma warning restore CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
 }
