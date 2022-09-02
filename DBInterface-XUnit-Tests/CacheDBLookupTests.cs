@@ -12,15 +12,6 @@ namespace DBInterface_XUnit_Tests
         internal static readonly ILookup NullLookup = null;
 
 
-
-        /// <summary>
-        /// This should be moved to CacheDBLookupFactoryTests
-        /// </summary>
-        [Fact]
-        public void CDBLBuilder_NullManager_Throws_ArgumentNullException()
-        {
-            Assert.Throws<ArgumentNullException>(() => CacheDBLookupFactory.BuildLookup(null, NullLookup));
-        }
     
     }
 }

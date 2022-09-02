@@ -20,7 +20,8 @@ namespace DBInterface.CacheDB
         /// <param name="lookup">Lookup.</param>
         /// <param name="bypassCache">If set to <c>true</c> bypass cache.</param>
         /// <param name="dontCacheResult">If set to <c>true</c> dont cache result.</param>
-        /// <exception cref="CustomTypeFailedVerificationException">A custom implementation of IMutableLookup failed behavioral verification</exception>
+        /// <exception cref="CustomTypeFailedVerificationException">A custom implementation of IMutableLookup failed behavioral verification</exception
+        /// <exception cref="ArgumentNullException">One or more required arguments are <c>null</c></exception>
         public static ICacheLookup BuildLookup
         (CacheDBLookupManager manager, ILookup lookup, bool bypassCache = false, bool dontCacheResult = false)
         {
