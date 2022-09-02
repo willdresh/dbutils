@@ -6,6 +6,13 @@ namespace DBInterface_XUnit_Tests.ExternalTypes
     {
         private static readonly Func<string?, ExternalLookup> GetTestInstance = (string? k) => new ExternalLookup(k);
         private static readonly Func<string?, BadExternalLookup> GetBadTestInstance = (string? k) => new BadExternalLookup(k);
+        private static readonly Func<BadExternalMutableLookup> GetBadMutable = () => new BadExternalMutableLookup();
+
+        [Fact]
+        public void BadMutable_GivesMutablesAsImmutables()
+        {
+            Assert.True(GetBadMutable().ImmutableCopy() is IMutableLookup<ILookup>);
+        }
 
         [Fact]
         public void BadType_KeyCopy_NotEqual_Original_Key()

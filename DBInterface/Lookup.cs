@@ -51,6 +51,14 @@ namespace DBInterface
                 key = value == null ? null : String.Copy(value); }
         }
 
+        public bool KeyEquals(string other_key)
+        {
+            if (other_key == null)
+                return key == null;
+
+            return key.Equals(other_key);
+        }
+
         /// <summary>
         /// Implements deep value-equality between Lookup objects
         /// </summary>
