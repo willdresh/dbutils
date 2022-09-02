@@ -117,23 +117,6 @@ namespace DBInterface_XUnit_Tests
         }
 
         [Fact]
-        public void ReadOnlyKey_Transformation_Applied_To_ReadOnlyKey()
-        {
-            const string testConst = "test";
-
-            // Arrange
-            string testKey = String.Copy(testConst);
-            MutableLookup test = MutableLookupBuilder(testKey);
-            string readOnlyKey = test.GetReadOnlyKey(); // ReferenceEquals(testKey, readOnlyKey) is asserted by Build_ReadOnlyKey_ReferenceEqualTo_Build_Parameter
-
-            // Act
-            readOnlyKey. += " - xform applied!";
-
-            //Assert
-            Assert.Equal(readOnlyKey, test.GetReadOnlyKey());
-        }
-
-        [Fact]
         public void Build_ReadOnlyKey_ReferenceEqualTo_Build_Parameter()
         {
             string testKey = "Test Key: MutableLookup.Build returns an instance whose ReadOnlyKey is reference-equal to the parameter";
