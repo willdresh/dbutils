@@ -102,6 +102,10 @@ namespace DBInterface
         }
     }
 
+    public class IllegalCacheOperationException : ApplicationException
+    { }
+
+
     partial class DBLookupResult
     {
         /// <summary>

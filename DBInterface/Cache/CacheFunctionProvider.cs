@@ -8,9 +8,7 @@ using CacheManager.Core;
 
 namespace DBInterface.Cache
 {
-        public class IllegalCacheOperationException : ApplicationException
-        { }
-
+    
         public sealed class CacheFunctionProvider: ILookupProvider<ILookup>
         {
             public sealed class NullKeyException : IllegalCacheOperationException
