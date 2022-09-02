@@ -17,6 +17,11 @@ namespace DBInterface
     {
         private string key;
 
+        internal Lookup(Lookup other)
+        {
+            KeyCopy = other.key;
+        }
+
         internal Lookup(string _key)
         {
             KeyCopy = _key;
@@ -27,6 +32,11 @@ namespace DBInterface
             KeyCopy = lu.Unwrap_Immutable.ReadOnlyKey;
         }
 
+        /// <summary>
+        /// This reference should never be transformed or externally exposed!
+        /// Ideally this property should be made private or removed entirely in future versions.
+        /// </summary>
+        //TODO
 	    internal string ReadOnlyKey { get { return key; } }
 
         /// <summary>
@@ -37,7 +47,9 @@ namespace DBInterface
         /// (Internal-only) Set accessor automatically executes a copy operation before storing the supplied <c>value</c>
         /// </remarks>
         public string KeyCopy { get { return (key == null ? null : String.Copy(key)); } 
-	       	internal set { key = value == null ? null : String.Copy(value); } }
+	       	internal set {
+                key = value == null ? null : String.Copy(value); }
+        }
 
         /// <summary>
         /// Implements deep value-equality between Lookup objects
@@ -79,6 +91,16 @@ namespace DBInterface
         {
             return new Lookup(key);
         }
+
+        public static Lookup BuildCopy(Lookup other)
+        {
+            return new Lookup(other);
+        }
+
+        public static Lookup BuildCopy(MutableLookup mutableOther)
+        {
+            return new Lookup(mutableOther.Unwrap_Immutable);
+        }
     }
 
     /// <summary>
@@ -97,7 +119,7 @@ namespace DBInterface
 
         internal MutableLookup(MutableLookup other)
         {
-            lu = other.lu;
+            lu = new Lookup(other.lu);
             readOnlyKey = lu.KeyCopy;
         }
 
