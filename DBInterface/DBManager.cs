@@ -34,19 +34,24 @@ namespace DBInterface
         private DbConnectionProvider cnxProvider;
         private DBLookupManager lookupMgr;
 
+        internal event DbConnectionUpdated BeforeDBConnectionChanges;
         internal event DbConnectionUpdated AfterDBConnectionChanged;
 
         public DBManager(DbConnectionProvider cnx_Provider)
         {
             cnxProvider = cnx_Provider;
             lookupMgr = new DBLookupManager(null);
-            AfterDBConnectionChanged += ((a, b) => { }); // Don't throw exceptions when event has 0 subscribers
+            AfterDBConnectionChanged += ((a, b) => { }); // Guarantee we never have 0 subscribers, to avoid unwanted exceptions when invoked
+            BeforeDBConnectionChanges += ((a, b) => { }); // Guarantee we never have 0 subscribers, to avoid unwanted exceptions when invoked
         }
 
         private void NextConnection()
         {
-            IDbConnection oldCnx = lookupMgr.connection, newCnx;
-            lookupMgr.connection = newCnx = cnxProvider(new ObtainDbConnectionEventArgs());
+            IDbConnection oldCnx = lookupMgr.connection,
+                newCnx = cnxProvider(new ObtainDbConnectionEventArgs());
+
+            BeforeDBConnectionChanges.Invoke(oldCnx, newCnx);
+            lookupMgr.connection = newCnx;
             AfterDBConnectionChanged.Invoke(oldCnx, newCnx);
         }
 
