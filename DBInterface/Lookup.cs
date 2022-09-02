@@ -141,7 +141,7 @@ namespace DBInterface
         /// </summary>
         /// <returns>A newly-constructed instance.</returns>
         /// <param name="key">(nullable) Key.</param>
-        public static IMutableLookup<ILookup> Build(string key=null)
+        public static MutableLookup Build(string key=null)
         {
             return Build_Internal(key);
         }
