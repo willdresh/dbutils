@@ -8,20 +8,6 @@ namespace DBInterface
 {
     public partial class DBLookupManager: LookupManager
     {
-
-        [Flags]
-        public enum DBConnectionPolicy
-        {
-            AUTO_CONNECT = 1,
-            AUTO_DISCONNECT_ALL = 2,
-            AUTO_DISCONNECT_WHEN_AUTOCONNECTED = 4,
-
-            /// <summary>
-            /// Functionality not yet implemented
-            /// </summary>
-            AUTO_REFRESH = 8
-        }
-
         public const DBConnectionPolicy DEFAULT_Connection_Policy =
             DBConnectionPolicy.AUTO_CONNECT
             | DBConnectionPolicy.AUTO_DISCONNECT_WHEN_AUTOCONNECTED;
