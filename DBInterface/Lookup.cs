@@ -31,8 +31,11 @@ namespace DBInterface
 
         /// <summary>
         /// Gets a copy of the lookup key, or returns null (if key is null). References to the
-	    /// lookup key itself cannot be obtained externally.
+	    /// lookup key itself cannot be obtained externally. <br />
         /// </summary>
+        /// <remarks>
+        /// (Internal-only) Set accessor automatically executes a copy operation before storing the supplied <c>value</c>
+        /// </remarks>
         public string KeyCopy { get { return (key == null ? null : String.Copy(key)); } 
 	       	internal set { key = value == null ? null : String.Copy(value); } }
 
