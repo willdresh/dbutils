@@ -54,8 +54,33 @@ namespace DBInterface
         }
     }
 
+    internal class ExternalIntegrationException: DBInterfaceApplicationException
+    {
+
+        private static readonly string DBIMessage = "External Integration Exception";
+
+        internal ExternalIntegrationException()
+            : base(DBIMessage) { }
+
+        internal ExternalIntegrationException(string message)
+            : base(GenerateMessage(message)) { }
+
+        internal ExternalIntegrationException(string message, Exception innerException)
+            : base(GenerateMessage(message), innerException) { }
+
+        internal ExternalIntegrationException(System.Runtime.Serialization.SerializationInfo info,
+                System.Runtime.Serialization.StreamingContext context)
+            : base(info, context) { }
+
+        private static string GenerateMessage(string msg)
+        {
+            return String.Format("{0}: {1}", DBIMessage, msg);
+        }
+    }
+
+    // TODO - Remove this exception class
     /// <summary>
-    /// Operation not permitted exception. Cannot be externally inherited, as it has
+    /// (WILL BE REMOVED SOON) Operation not permitted exception. Cannot be externally inherited, as it has
     /// no public constructor.
     /// </summary>
     public class OperationNotPermittedException : DBInterfaceApplicationException
