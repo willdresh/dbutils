@@ -109,10 +109,35 @@ namespace DBInterface
 
 	    internal Lookup Unwrap_Immutable { get { return lu; } }
 
+        /// <summary>
+        /// Get or set the lookup key for this <see cref="MutableLookup"/>. <br />
+        /// This accessor differs slightly from <see cref="MutableLookup.KeyCopy"/>, in that
+        /// when <c>MutableLookup.Key.get</c> is called, no new copy of the key is generated. <br />
+        /// This accessor should generally be preferred over <see cref="MutableLookup.KeyCopy.get"/>
+        /// wherever possible for best performance.<br />
+        /// </summary>
+        /// <remarks>
+        /// No transformations should be applied to
+        /// </remarks>
+        public string Key {
+            get => readOnlyKey;
+            set => this.KeyCopy = value;
+        }
+
+        /// <summary>
+        /// Get or set a copy of the lookup key.<br />
+        /// As a rule, <see cref="ILookup"/>s own the only reference to their key, and they <br />
+        /// never expose this reference - not even internally.
+        /// Thus, every call to <c>MutableLookup.KeyCopy</c> - be it a <c>get</c> or a <c>set</c> -
+        /// results in a call to <see cref="String.Copy(string)"/>.<br />
+        /// <br />
+        /// To improve performance, <see cref="MutableLookup.Key.get" /> may be used instead of
+        /// <c>MutableLookup.KeyCopy.get</c> in order to avoid a call to <c>String.Copy(string)</c>.
+        /// </summary>
         public string KeyCopy
         {
-            get { return readOnlyKey; }
-            set { lu.KeyCopy = readOnlyKey = value; }
+            get => lu.KeyCopy;
+            set => lu.KeyCopy = readOnlyKey = value;
         }
 
         public static MutableLookup Copy(MutableLookup original)
