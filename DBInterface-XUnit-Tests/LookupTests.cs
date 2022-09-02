@@ -13,6 +13,13 @@ namespace DBInterface_XUnit_Tests
         private static readonly Func<string, MutableLookup> MutableLookupBuilder = MutableLookup.Build;
         private static readonly Func<string, Lookup> LookupBuilder = Lookup.Build;
 
+
+        [Fact]
+        public void Build_AllowsNullKey()
+        {
+            Assert.True(LookupBuilder(null) is Lookup);
+        }
+
         [Fact]
         public void Build_KeyCopy_ValueEqualTo_BuildParameter()
         {
