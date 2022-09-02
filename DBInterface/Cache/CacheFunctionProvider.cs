@@ -38,9 +38,6 @@ namespace DBInterface.Cache
                 ValidateParams(entry.Query);
             }
 
-            //public class NullResultException: IllegalCacheOperationException
-            //{ }
-
             /// <summary>
             /// Lookup the specified query using the supplied cache manager instance
             /// </summary>
