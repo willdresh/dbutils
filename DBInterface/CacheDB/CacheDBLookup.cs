@@ -28,10 +28,6 @@ namespace DBInterface.CacheDB
                 :base(argumentName, FBDEMessage) {  }
         }
 
-        private const int Hashcode_Operand = 20;
-        private const int Hashcode_XOR_Operand_BypassCache = 4;
-        private const int Hashcode_XOR_Operand_DontCacheResult = 8;
-
         internal CacheDBLookup(DBLookup dbLookup, bool bypassCache, bool dontCacheResult)
             : base(dbLookup.ReadOnlyKey, dbLookup.DBConnection)
         {
@@ -39,8 +35,8 @@ namespace DBInterface.CacheDB
             DontCacheResult = dontCacheResult;
         }
 
-        internal CacheDBLookup(DBLookupBase dbLookup, bool bypassCache, bool dontCacheResult)
-            : base(dbLookup.KeyCopy, dbLookup.DBConnection)
+        internal CacheDBLookup(DBLookupBase ext_dbLookup, bool bypassCache, bool dontCacheResult)
+            : base(ext_dbLookup.KeyCopy, ext_dbLookup.DBConnection)
         {
             BypassCache = bypassCache;
             DontCacheResult = dontCacheResult;
@@ -80,17 +76,15 @@ namespace DBInterface.CacheDB
             if (mgr == null)
                 throw new CacheDBLookupBugDetectedException(nameof(mgr));
 
-            if (query is DBLookupBase dBLookupBase)
-                return new CacheDBLookup(dBLookupBase.ReadOnlyKey, mgr.connection, bypassCache, dontCacheResult);
-
-            return new CacheDBLookup(query.KeyCopy, mgr.connection, bypassCache, dontCacheResult);
+            return new CacheDBLookup((query is DBLookupBase dbLookupBase) ? dbLookupBase.ReadOnlyKey : query.KeyCopy, 
+                mgr.connection, bypassCache, dontCacheResult);
         }
 
         /// <summary>
         /// Build a lookup 
         /// </summary>
         /// <exception cref="ArgumentNullException"><c>dbLookup</c> is <c>null</c>,</exception>
-        public static ICacheLookup Build(DBLookupManager mgr, ILookup query, bool bypassCache = false, bool dontCacheResult = false)
+        public static CacheDBLookup Build(DBLookupManager mgr, ILookup query, bool bypassCache = false, bool dontCacheResult = false)
         {
             if (mgr == null)
                 throw new ArgumentNullException(nameof(mgr));
@@ -99,10 +93,29 @@ namespace DBInterface.CacheDB
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="key">(nullable)</param>
+        /// <param name="dbLookup">(NOT NULL)</param>
+        /// <param name="cacheLookup">(NOT NULL)</param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"><c>dbLookup</c> or <c>cacheLookup</c> is <c>null</c></exception>
+        public static CacheDBLookup BuildUnion(string key, DBLookupBase dbLookup, ICacheLookup cacheLookup)
+        {
+            if (dbLookup == null)
+                throw new ArgumentNullException(nameof(dbLookup));
+            if (cacheLookup == null)
+                throw new ArgumentNullException(nameof(cacheLookup));
+
+
+            return new CacheDBLookup(key, dbLookup.DBConnection, cacheLookup.BypassCache, cacheLookup.DontCacheResult);
+        }
+
+        /// <summary>
         /// Build a lookup 
         /// </summary>
         /// <exception cref="ArgumentNullException"><c>dbLookup</c> is <c>null</c>,</exception>
-        public static ICacheLookup Build(DBLookupBase dbLookup, bool bypassCache = false, bool dontCacheResult = false)
+        public static CacheDBLookup Build(DBLookupBase dbLookup, bool bypassCache = false, bool dontCacheResult = false)
         {
             if (dbLookup == null)
                 throw new ArgumentNullException(nameof(dbLookup));
@@ -121,7 +134,7 @@ namespace DBInterface.CacheDB
         {
             if (other is IMutableLookup<ICacheLookup> ext_mu_icl) {
                 if (!LookupManager.VerifyInstance(ext_mu_icl as IMutableLookup<ILookup>, out LookupManager.External_IMutableLookup_VerificationFlags flags))
-                    throw new SecurityException("Verification Failed in CacheDBLookup");
+                    throw new LookupManager.CustomTypeFailedVerificationException(flags);
 
                 return Equals(ext_mu_icl.ImmutableCopy());
             }
