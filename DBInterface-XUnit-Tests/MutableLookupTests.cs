@@ -73,7 +73,7 @@ namespace DBInterface_XUnit_Tests
         public void ImmutableCopy_Returns_InstanceOf_Lookup()
         {
             string testKey = "Test Key: MutableLookup.ImmutableCopy() returns an instance of Lookup";
-            ILookup test = MutableLookup.Build(testKey).ImmutableCopy();
+            ILookup test = MutableLookupBuilder(testKey).ImmutableCopy();
 
             Assert.True(test is Lookup);
         }
@@ -83,7 +83,7 @@ namespace DBInterface_XUnit_Tests
         [InlineData(null)]
         public void Equals_ImmutableCopy_Equals_this(string? key)
         {
-            MutableLookup test = MutableLookup.Build(key);
+            MutableLookup test = MutableLookupBuilder(key);
 
             Assert.True(test.Equals(test.ImmutableCopy()));
         }
@@ -92,7 +92,7 @@ namespace DBInterface_XUnit_Tests
         public void Build_KeyCopy_ValueEqualTo_Build_Parameter()
         {
             string testKey = "Test Key: MutableLookup.Build returns an instance whose KeyCopy is value-equal (String.Equals) to the parameter";
-            MutableLookup test = MutableLookup.Build(testKey);
+            MutableLookup test = MutableLookupBuilder(testKey);
 
             Assert.True(testKey.Equals(test.KeyCopy));
         }
@@ -103,7 +103,7 @@ namespace DBInterface_XUnit_Tests
             string testKey = "Test Key: MutableLookup.Build returns an instance whose KeyCopy is NOT reference-equal to the parameter";
             MutableLookup test = MutableLookup.Build(testKey);
 
-            Assert.False(ReferenceEquals(testKey, test.KeyCopy));
+            Assert.False(ReferenceEquals(testKey, test.Key));
         }
     }
 }
