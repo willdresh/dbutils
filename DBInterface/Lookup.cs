@@ -104,7 +104,7 @@ namespace DBInterface
         internal MutableLookup(string key = null)
         {
             lu = new Lookup(key);
-            readOnlyKey = lu.KeyCopy;
+            readOnlyKey = key;
 	    }
 
 	    internal Lookup Unwrap_Immutable { get { return lu; } }
@@ -113,6 +113,14 @@ namespace DBInterface
         {
             get { return readOnlyKey; }
             set { lu.KeyCopy = readOnlyKey = value; }
+        }
+
+        public static MutableLookup Copy(MutableLookup original)
+        {
+            if (original == null)
+                throw new ArgumentNullException(nameof(original));
+            
+            return new MutableLookup(original);
         }
 
         /// <summary>
@@ -130,23 +138,13 @@ namespace DBInterface
         }
 
         /// <summary>
-        /// Builds an instance. Exception-safe. (Internal use only)
-        /// </summary>
-        /// <returns>A newly-constructed instance.</returns>
-        /// <param name="key">(nullable) Key.</param>
-        internal static MutableLookup Build_Internal(string key=null)
-        {
-            return new MutableLookup(key);
-        }
-
-        /// <summary>
         /// Builds an instance. Exception-safe.
         /// </summary>
         /// <returns>A newly-constructed instance.</returns>
         /// <param name="key">(nullable) Key.</param>
         public static MutableLookup Build(string key=null)
         {
-            return Build_Internal(key);
+            return new MutableLookup(key);
         }
 
         /// <summary>
@@ -173,6 +171,11 @@ namespace DBInterface
 
         public bool Equals(MutableLookup other)
         {
+            if (other == null)
+                throw new ArgumentNullException(nameof(other));
+            else if (lu.ReadOnlyKey == null)
+                return other.KeyCopy == null;
+
             return lu.ReadOnlyKey.Equals(other.lu.ReadOnlyKey);
         }
     }

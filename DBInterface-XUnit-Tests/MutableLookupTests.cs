@@ -29,11 +29,10 @@ namespace DBInterface_XUnit_Tests
             Assert.False(ReferenceEquals(test1.KeyCopy, test2.KeyCopy));
         }
 
-        [Theory]
-        [InlineData("test Equals_Implements_ValueEquality_With_MutableLookup")]
-        [InlineData(null)]
-        public void Equals_Implements_ValueEquality_With_MutableLookup(string testKey)
+        [Fact]
+        public void Equals_Implements_ValueEquality_With_MutableLookup()
         {
+            string testKey = "test Equals_Implements_ValueEquality_With_MutableLookup";
             MutableLookup test1 = MutableLookupBuilder(testKey),
                 test2 = MutableLookupBuilder(testKey);
 
