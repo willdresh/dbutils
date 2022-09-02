@@ -9,7 +9,7 @@ namespace DBInterface_XUnit_Tests.ExternalTypes
         Lookup lu;
 
         public ExternalLookup() { lu = Lookup.Build("Example"); ExternalData = 2.71; }
-        public ExternalLookup(string key) { lu = Lookup.Build(key); ExternalData = 3.14; }
+        public ExternalLookup(string? key) { lu = Lookup.Build(key); ExternalData = 3.14; }
 
         public double ExternalData { get; set; }
 
@@ -47,18 +47,20 @@ namespace DBInterface_XUnit_Tests.ExternalTypes
     internal class BadExternalLookup: ExternalLookup, ILookup, IEquatable<ILookup>
     {
         public BadExternalLookup() : base() { }
-        public BadExternalLookup(string key) : base(key) { }
+        public BadExternalLookup(string? key) : base(key) { }
 
         public static readonly string AnyInstanceReturnsThisForKeyCopy = "Muahaha! I did not copy faithfully!";
         public override string KeyCopy => AnyInstanceReturnsThisForKeyCopy;
 
         public override bool Equals(ILookup? other)
         {
+            if (other == null) return true;
             return !base.Equals(other);
         }
 
         public override bool Equals(object? obj)
         {
+            if (obj == null) return true;
             return !base.Equals(obj);
         }
     }
