@@ -6,43 +6,8 @@ using System.Data;
 
 namespace DBInterface
 {
-    public class DBLookupManager: LookupManager
+    public partial class DBLookupManager: LookupManager
     {
-        internal sealed class DBLookupManagerBugDetectedException: ArgumentNullException
-        {
-            private static readonly string FBDEMessage = "A required argument was null in a call to a static internal method of DBLookupManager; this probably means a bug in the caller's code";
-            internal DBLookupManagerBugDetectedException(string methodName, string argumentName)
-                : base(argumentName, FBDEMessage) { MethodName = methodName; }
-
-            public string MethodName { get; }
-
-            private static string GenerateMessage(string method, string argument)
-            {
-                return String.Format("{0} -- MethodName={1} -- ArgumentName={2}", FBDEMessage, method, argument);
-            }
-        }
-
-        /// <summary>
-        /// Internal instance expected exception.
-        /// </summary>
-        /// <remarks>
-        /// These could be publicly caught as type <see cref="SecurityException"/>
-        /// </remarks>
-        internal sealed class InternalInstanceExpectedException : SecurityException
-        {
-            private static readonly string IIEEMessage = "Internal instance expected in a method of class DBLookupManager";
-
-            internal InternalInstanceExpectedException()
-                : base(IIEEMessage) { }
-
-            internal InternalInstanceExpectedException(string message)
-                : base(GenerateMessage(message)) { }
-
-            private static string GenerateMessage(string msg)
-            {
-                return String.Format("{0}: {1}", IIEEMessage, msg);
-            }
-        }
 
         [Flags]
         public enum DBConnectionPolicy

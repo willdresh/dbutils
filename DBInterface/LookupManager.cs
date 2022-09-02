@@ -9,43 +9,8 @@ namespace DBInterface
     /// Lookup Manager. This class cannot be externally inherited, as it has no
     /// public constructors.
     /// </summary>
-    public abstract class LookupManager: ILookupProvider<ILookup>
+    public abstract partial class LookupManager: ILookupProvider<ILookup>
     {
-        /// <summary>
-        /// Custom type failed verification exception. This class cannot be inherited.
-        /// This class cannot be publicly constructed.
-        /// </summary>
-        protected internal sealed class CustomTypeFailedVerificationException: SecurityException
-        {
-            private static readonly string CTFVEMessage = "A custom mutable instance failed internal integrity checks";
-
-            public External_IMutableLookup_VerificationFlags VerificationFlags { get; }
-
-            internal CustomTypeFailedVerificationException(External_IMutableLookup_VerificationFlags flags)
-                :base(CTFVEMessage)
-            { VerificationFlags = flags; }
-        }
-
-        /// <summary>
-        /// Lookup not permitted exception. This class cannot be inherited.
-        /// </summary>
-        protected internal sealed class LookupNotPermittedException: OperationNotPermittedException
-        {
-            private static readonly string LookupNotPermittedMessage = "Policy prohibits lookup operation";
-            public LookupNotPermittedException()
-                : base(LookupNotPermittedMessage) { }
-
-            public LookupNotPermittedException(string message)
-                : base(GenerateMessage(message)) { }
-
-            public LookupNotPermittedException(string message, Exception innerException)
-                : base(GenerateMessage(message), innerException) { }
-
-            private static string GenerateMessage(string msg)
-            {
-                return String.Format("{0}: {1}", LookupNotPermittedMessage, msg);
-            }
-        }
 
         [Flags]
         public enum LookupPolicy { ALLOW_LOOKUP = 1 }
