@@ -3,11 +3,14 @@
 // w@dresh.app
 
 using System;
+using DBInterface_XUnit_Tests.ExternalTypes;
 using DBInterface;
 using Xunit;
+using System.Reflection.Metadata.Ecma335;
 
 namespace DBInterface_XUnit_Tests
 {
+
     public class LookupTests
     {
         private static readonly Func<string, MutableLookup> MutableLookupBuilder = MutableLookup.Build;
