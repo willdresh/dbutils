@@ -8,7 +8,6 @@ namespace DBInterface
 {
     public partial class DBLookupManager: LookupManager
     {
-        public delegate IDbConnection DBConnectionProvider();
 
         [Flags]
         public enum DBConnectionPolicy
@@ -18,7 +17,7 @@ namespace DBInterface
             AUTO_DISCONNECT_WHEN_AUTOCONNECTED = 4,
 
             /// <summary>
-            /// Implementation in-progress
+            /// Functionality not yet implemented
             /// </summary>
             AUTO_REFRESH = 8
         }
@@ -29,52 +28,10 @@ namespace DBInterface
 
         internal IDbConnection connection;
         private ILookupProvider<DBLookupBase> dblp;
-        protected DBConnectionProvider connectionProvider;
 
         public DBConnectionPolicy ConnectionPolicy { get; }
-
-        /// <summary>
-        /// Get the state of the connection managed by this instance. May throw exception
-        /// if this instance currently does not own any connection.
-        /// </summary>
-        /// <exception cref="InvalidOperationException">
-        /// This instance does not currently manage a <c>System.Data.IDbConnection</c>.
-        /// </exception>
-        /// <seealso cref="IsManagingConnection"/>
-        public ConnectionState ConnectionState { get {
-                if (connection == null)
-                    throw new InvalidOperationException();
-                return connection.State;
-        } }
-
-        /// <summary>
-        /// Get a value indicating whether or not this instance currently manages a
-        /// <c>System.Data.IDbConnection</c>.
-        /// </summary>
-        public bool IsManagingConnection { get
-            {
-                return connection != null;
-            } }
-
-        /// <summary>
-        /// Get a value indicating whether or not the <c>System.Data.IDbConnection</c> managed
-        /// by this instance is currently open (connected).
-        /// </summary>
-        /// <exception cref="InvalidOperationException">
-        /// This instance does not currently manage a <c>System.Data.IDbConnection</c>.
-        /// </exception>
-        /// <seealso cref="IsManagingConnection"/>
-        public bool DatabaseConnected { get {
-                if (connection == null)
-                    throw new InvalidOperationException();
-
-                return ConnectionState.HasFlag(ConnectionState.Open);
-        } }
-
-        public DBLookupManager(DBConnectionProvider connectionProvider, DBConnectionPolicy policy = DEFAULT_Connection_Policy)
-        {
-            connection = null;
-        }
+        public ConnectionState ConnectionState { get { return connection.State; } }
+        public bool DatabaseConnected { get { return ConnectionState.HasFlag(ConnectionState.Open); } }
 
         public DBLookupManager(IDbConnection _connection, DBConnectionPolicy policy = DEFAULT_Connection_Policy)
         {
