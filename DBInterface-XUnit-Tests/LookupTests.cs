@@ -19,6 +19,7 @@ namespace DBInterface_XUnit_Tests
         [Fact]
         public void Equals_Lookup_With_NullKey_Equals_MutableLookup_With_NullKey()
         {
+            Console.WriteLine("hello! -Cyril Figgis");
             Assert.True(LookupBuilder(null).Equals(MutableLookupBuilder(null)));
         }
 

@@ -107,7 +107,9 @@ namespace DBInterface
         /// The <c>System.Data.IDbConnection</c> was successfully connected,
         /// but had improper/unexpected <c>ConnectionState</c> flags.
         /// </exception>
-        protected internal DBLookupResult DatabaseLookup(DBLookup query)
+        public DBLookupResult DatabaseLookup(DBLookup query)
+            //TODO - change to internal or MAYBE protected internal.
+            //was changed to public for unit testing
         {
             if (query == null)
                 throw new ArgumentNullException(nameof(query));
