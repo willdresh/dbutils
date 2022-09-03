@@ -4,7 +4,7 @@ using System.Data;
 
 namespace DBInterface
 {
-    public delegate IDbConnection DBConnectionProvider(ObtainDbConnectionEventArgs args);
+    public delegate IDbConnection DBConnectionProvider(DeltaDBConnectionArgs args);
 
     [Flags]
     public enum DBConnectionPolicy
@@ -15,36 +15,33 @@ namespace DBInterface
     }
 
     /// <summary>
-    /// <c>public struct ObtainDbConnectionEventArgs</c>
-    /// </summary>
-    [Serializable]
-    [System.Runtime.InteropServices.ComVisible(true)]
-    public struct ObtainDbConnectionEventArgs
-    { }
-
-    /// <summary>
     /// DBManager. This class cannot be externally inherited, as it has
     /// private-only construction. Note that building a DBManager
     /// always has a chance to throw exceptions (see <see cref="DBManager.Build(DBConnectionProvider, DBConnectionPolicy)"/>).
     /// </summary>
     public class DBManager: ILookupProvider<ILookup>
     {
-        internal delegate void DbConnectionUpdated(IDbConnection oldCnx, IDbConnection newCnx);
-
-
         #region Test members - remove for production
 
         // RFP!
-        public delegate IDbConnection DbConnectionUpdated_For_XUnit(IDbConnection oldCnx, IDbConnection newCnx);
+        public delegate DeltaDBConnectionArgs DbConnectionUpdated_For_XUnit(DeltaDBConnectionArgs args);
 
         // RFP!
         public static IDbConnection GetNewCnx_For_XUnit(IDbConnection oldCnx, IDbConnection newCnx)
         {
             return newCnx;
         }
+
+        // These public events must be removed for deployment; they are added for testing purposes only
+        // CTRL+F for the comment "RFP!" (remove for production)
+        public event DbConnectionUpdated_For_XUnit XUnit_BefDBCnxCha; // RFP!
+        public event DbConnectionUpdated_For_XUnit XUnit_AftDBCnxCha; // RFP!
+
         #endregion
 
         #region Nested Types
+
+        internal delegate void DbConnectionUpdated(DeltaDBConnectionArgs args);
 
         internal class InvalidDBConnectionProvider: ExternalIntegrationException
         {
@@ -55,25 +52,27 @@ namespace DBInterface
 
         #endregion
 
-        // invariant_args will need to be removed if ObtainDbConnectionEventArgs is
-        // ever changed to do something instance-specific
-        private static readonly ObtainDbConnectionEventArgs invariant_args = new ObtainDbConnectionEventArgs();
+        #region Static member data (defaults)
         public const DBConnectionPolicy DEFAULT_Connection_Policy =
             DBConnectionPolicy.AUTO_CONNECT
             | DBConnectionPolicy.AUTO_DISCONNECT_WHEN_AUTOCONNECTED;
+        #endregion
+
+        #region Private member data
 
         private DBConnectionPolicy policy;
         private DBConnectionProvider cnxProvider;
         private DBLookupManager lookupMgr;
 
+        #endregion
+
+        #region Internal events
 
         internal event DbConnectionUpdated BeforeDBConnectionChanges;
         internal event DbConnectionUpdated AfterDBConnectionChanged;
 
-        // These public events must be removed for deployment; they are added for testing purposes only
-        // CTRL+F for the comment "RFP!" (remove for production)
-        public event DbConnectionUpdated_For_XUnit XUnit_BefDBCnxCha; // RFP!
-        public event DbConnectionUpdated_For_XUnit XUnit_AftDBCnxCha; // RFP!
+        #endregion;
+
 
         /// <summary>
         /// Private constructor for DBManager. <br />
@@ -85,15 +84,33 @@ namespace DBInterface
         private DBManager(DBConnectionProvider cnx_Provider, DBConnectionPolicy policy = DEFAULT_Connection_Policy)
         {
             cnxProvider = cnx_Provider;
-            AfterDBConnectionChanged += ((a, b) => { }); // Guarantee we never have 0 subscribers, to avoid unwanted exceptions when invoked
-            BeforeDBConnectionChanges += ((a, b) => { }); // Guarantee we never have 0 subscribers, to avoid unwanted exceptions when invoked
-
+            
             IDbConnection conn;
             try
             {
-                conn = cnxProvider(invariant_args);
+                conn = cnxProvider(new DeltaDBConnectionArgs());
                 if (conn == null) throw new NoNullAllowedException("in DBManagerManager.cs:78 - cnxProvider function returned null");
             } catch (Exception ex) { throw new InvalidDBConnectionProvider("in DBManager.cs:79 DBManager::DBManager(...)", ex); }
+
+            #region Test Members - remove for production
+
+            XUnit_AftDBCnxCha += (a) => a; // Prevent exceptions from being thrown by events with 0 subscribers
+            XUnit_BefDBCnxCha += (a) => a; // Prevent exceptions from being thrown by events with 0 subscribers
+
+            #endregion
+
+            // Preload events so that they won't throw exceptions
+            AfterDBConnectionChanged += ((a) => {
+                // Automatically invoke our test event whenever our normal event is invoked
+                // For production, just delete the following line and have empty braces for the function body of the lambda
+                XUnit_AftDBCnxCha.Invoke(a); // RFP!
+            });
+            BeforeDBConnectionChanges += ((a) =>
+            {
+                // Automatically invoke our test event whenever our normal event is invoked
+                // For production, just delete the following line and have empty braces for the function body of the lambda
+                XUnit_BefDBCnxCha.Invoke(a); // RFP!
+            });
 
             lookupMgr = new DBLookupManager(conn);
         }
@@ -113,19 +130,12 @@ namespace DBInterface
             return new DBManager(cnx_Provider, policy);
         }
 
-        public static DBManager Build_For_TestDummy(TestDummy dummy, DBConnectionProvider cnx_Provider, DBConnectionPolicy policy = DEFAULT_Connection_Policy)
-        {
-
-
-            return Build(cnx_Provider, policy);
-        }
-
         // TODO - should this really be public? Unsure
         // set to public for testing purposes
         public void NextConnection()
         {
             IDbConnection oldCnx = lookupMgr.connection,
-                newCnx = cnxProvider(new ObtainDbConnectionEventArgs());
+                newCnx = cnxProvider(new DeltaDBConnectionArgs());
 
             BeforeDBConnectionChanges.Invoke(oldCnx, newCnx);
             lookupMgr.connection = newCnx;
