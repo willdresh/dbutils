@@ -19,26 +19,8 @@ namespace DBInterface
     /// private-only construction. Note that building a DBManager
     /// always has a chance to throw exceptions (see <see cref="DBManager.Build(DBConnectionProvider, DBConnectionPolicy)"/>).
     /// </summary>
-    public class DBManager: ILookupProvider<ILookup>
+    public partial class DBManager: ILookupProvider<ILookup>
     {
-        #region Test members - remove for production
-
-        // RFP!
-        public delegate void DbConnectionUpdated_For_XUnit(DeltaDBConnectionArgs args);
-
-        // RFP!
-        public IDbConnection GetCnx_For_XUnit()
-        {
-            return lookupMgr.connection;
-        }
-
-        // These public events must be removed for deployment; they are added for testing purposes only
-        // CTRL+F for the comment "RFP!" (remove for production)
-        public event DbConnectionUpdated_For_XUnit XUnit_BefDBCnxCha; // RFP!
-        public event DbConnectionUpdated_For_XUnit XUnit_AftDBCnxCha; // RFP!
-
-        #endregion
-
         #region Nested Types
 
         internal delegate void DbConnectionUpdated(DeltaDBConnectionArgs args);
