@@ -28,18 +28,15 @@ namespace DBInterface_XUnit_Tests
         {
 
             [Fact]
-            public void BeforeDBConnectionChanges_Invoked_During_Call_To_NextConnection()
+            public void DBConnectionChanges_Invoked_During_Call_To_NextConnection()
             {
                 DBManager test = build_test_mgr();
                 test.NextConnection();
 
-                Assert.True(test);
-            }
+                if (!(test.GetCnx_For_XUnit() is Dummy dummy))
+                    throw new Exception("Not a dummy! DBManagerTests.cs:37");
 
-            [Fact]
-            public void AfterDBConnectionChanges_Invoked_During_Call_To_NextConnection()
-            {
-
+                Assert.True(dummy.TestBit);
             }
         }
     }

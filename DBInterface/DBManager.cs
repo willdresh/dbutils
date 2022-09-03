@@ -27,9 +27,9 @@ namespace DBInterface
         public delegate DeltaDBConnectionArgs DbConnectionUpdated_For_XUnit(DeltaDBConnectionArgs args);
 
         // RFP!
-        public static IDbConnection GetNewCnx_For_XUnit(IDbConnection oldCnx, IDbConnection newCnx)
+        public IDbConnection GetCnx_For_XUnit()
         {
-            return newCnx;
+            return lookupMgr.connection;
         }
 
         // These public events must be removed for deployment; they are added for testing purposes only
@@ -135,10 +135,12 @@ namespace DBInterface
         public void NextConnection()
         {
             IDbConnection oldCnx = lookupMgr.connection;
-            IDbConnection newCnx = cnxProvider();
+
+            IDbConnection newCnx = cnxProvider(); 
             var args = new DeltaDBConnectionArgs(oldCnx, newCnx);
 
             BeforeDBConnectionChanges.Invoke(args);
+
             lookupMgr.connection = newCnx;
             AfterDBConnectionChanged.Invoke(args);
         }

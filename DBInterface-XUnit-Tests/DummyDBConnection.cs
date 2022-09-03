@@ -15,7 +15,7 @@ namespace DBInterface_XUnit_Tests
 
         public DummyDBConnection()
         {
-            TestBit = false;
+            TestBit = null;
             auto_id = auto_id_source++;
         }
 
