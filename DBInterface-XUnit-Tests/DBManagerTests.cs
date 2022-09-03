@@ -1,6 +1,5 @@
 ﻿using DBInterface;
 using System.Data;
-using static DBInterface.DBManager;
 using Dummy = DBInterface_XUnit_Tests.DummyDBConnection;
 
 namespace DBInterface_XUnit_Tests
@@ -9,20 +8,19 @@ namespace DBInterface_XUnit_Tests
     {
         
         #region Static instances for use by any tests that do not need to modify member data
-        internal static DbConnectionUpdated_For_XUnit default_event_handler = (args) => {
-            (args.OldCnx as Dummy).TestBit = true;
-            (args.NewCnx as Dummy).TestBit = false;
-            return args;
-        };
-        internal static DBConnectionProvider build_dummy = () => Dummy.Build();
-        internal static DBManager build_test_mgr(Dummy dummy) { return Build(() => dummy); }
-        internal static DBManager static_instance;
+
+        internal static DBManager.DbConnectionUpdated_For_XUnit set_newcnx_testbit_true =
+            (args) => { (args.NewCnx as Dummy).TestBit = true; };
+
+        internal static DBConnectionProvider build_dummy = Dummy.Build;
+        internal static DBManager build_test_mgr(IDbConnection dummy) { return DBManager.Build(() => dummy); }
+        internal static DBManager static_mgr;
         #endregion
 
 
         static DBManagerTests()
         {
-            try { static_instance = DBManager.Build(build_dummy); }
+            try { static_mgr = build_test_mgr(build_dummy()); }
             catch (ArgumentNullException ex) { throw new ApplicationException("from DBManagerTests::static DBManagerTests()", ex); }
             catch (NoNullAllowedException ex) { throw new ApplicationException("from DBManagerTests::static DBManagerTests()", ex); }
             catch (DBInterfaceFatalException ex) { throw new ApplicationException("from DBManagerTests::static DBManagerTests()", ex); }
@@ -32,16 +30,28 @@ namespace DBInterface_XUnit_Tests
         {
 
             [Fact]
-            public void DBConnectionChanges_Invoked_During_Call_To_NextConnection()
+            public void BeforeDBConnectionChange_Invoked_During_Call_To_NextConnection()
             {
-                Dummy dummy = new Dummy();
+                bool result;
+                IDbConnection newCnx;
+                Dummy dummy = build_dummy() as Dummy;
                 DBManager test = build_test_mgr(dummy);
+                test.XUnit_BefDBCnxCha += set_newcnx_testbit_true;
+
                 test.NextConnection();
+                newCnx = test.GetCnx_For_XUnit() as Dummy;
 
-                if (!(test.GetCnx_For_XUnit() is Dummy))
-                    throw new Exception("Not a dummy! DBManagerTests.cs:37");
 
-                Assert.True(dummy.TestBit);
+                Assert.IsType<Dummy>(test.GetCnx_For_XUnit()); // This assertion is a tautology based on how we've arranged
+
+                                                                // If this assertion fails, then the test instance is actually
+                Assert.True(ReferenceEquals(newCnx, dummy));    // generating multiple dummy instances, instead of always returning the same instance
+                                                                // It may be a logical error in build_test_mgr
+
+                                            // This is the real assertion we want to test:
+                Assert.True(dummy.TestBit); // did the dummy get acted on by set_newcnx_testbit_true
+                                            // after the call to NextConnection()?
+
             }
         }
     }

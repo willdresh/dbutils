@@ -24,7 +24,7 @@ namespace DBInterface
         #region Test members - remove for production
 
         // RFP!
-        public delegate DeltaDBConnectionArgs DbConnectionUpdated_For_XUnit(DeltaDBConnectionArgs args);
+        public delegate void DbConnectionUpdated_For_XUnit(DeltaDBConnectionArgs args);
 
         // RFP!
         public IDbConnection GetCnx_For_XUnit()
@@ -94,22 +94,22 @@ namespace DBInterface
 
             #region Test Members - remove for production
 
-            XUnit_AftDBCnxCha += (a) => a; // Prevent exceptions from being thrown by events with 0 subscribers
-            XUnit_BefDBCnxCha += (a) => a; // Prevent exceptions from being thrown by events with 0 subscribers
+            XUnit_AftDBCnxCha += (a) => { }; // Prevent exceptions from being thrown by events with 0 subscribers
+            XUnit_BefDBCnxCha += (a) => { }; // Prevent exceptions from being thrown by events with 0 subscribers
 
             #endregion
 
             // Preload events so that they won't throw exceptions
             AfterDBConnectionChanged += ((a) => {
                 // Automatically invoke our test event whenever our normal event is invoked
-                // For production, just delete the following line and have empty braces for the function body of the lambda
+                // For production, just delete the following 1 line and have empty braces for the function body of the lambda
                 XUnit_AftDBCnxCha.Invoke(a); // RFP!
             });
 
             BeforeDBConnectionChanges += ((a) =>
             {
                 // Automatically invoke our test event whenever our normal event is invoked
-                // For production, just delete the following line and have empty braces for the function body of the lambda
+                // For production, just delete the following 1 line and have empty braces for the function body of the lambda
                 XUnit_BefDBCnxCha.Invoke(a); // RFP!
             });
 
