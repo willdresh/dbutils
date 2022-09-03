@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Data;
 
-using TestDummy = DBInterface_XUnit_tests.DummyDBConnection;
 
 namespace DBInterface
 {
@@ -35,13 +34,17 @@ namespace DBInterface
 
         #region Test members - remove for production
 
+        // RFP!
         public delegate IDbConnection DbConnectionUpdated_For_XUnit(IDbConnection oldCnx, IDbConnection newCnx);
 
+        // RFP!
         public static IDbConnection GetNewCnx_For_XUnit(IDbConnection oldCnx, IDbConnection newCnx)
         {
             return newCnx;
         }
         #endregion
+
+        #region Nested Types
 
         internal class InvalidDBConnectionProvider: ExternalIntegrationException
         {
@@ -49,6 +52,8 @@ namespace DBInterface
                 :base(str, ex)
             { }
         }
+
+        #endregion
 
         // invariant_args will need to be removed if ObtainDbConnectionEventArgs is
         // ever changed to do something instance-specific
@@ -60,13 +65,15 @@ namespace DBInterface
         private DBConnectionPolicy policy;
         private DBConnectionProvider cnxProvider;
         private DBLookupManager lookupMgr;
-        private bool cnxUsed;
 
 
-        // TODO - change to internal for production
-        // (currently set to public for testing purposes - this is not safe for deployment)
-        public event DbConnectionUpdated BeforeDBConnectionChanges;
-        public event DbConnectionUpdated AfterDBConnectionChanged;
+        internal event DbConnectionUpdated BeforeDBConnectionChanges;
+        internal event DbConnectionUpdated AfterDBConnectionChanged;
+
+        // These public events must be removed for deployment; they are added for testing purposes only
+        // CTRL+F for the comment "RFP!" (remove for production)
+        public event DbConnectionUpdated_For_XUnit XUnit_BefDBCnxCha; // RFP!
+        public event DbConnectionUpdated_For_XUnit XUnit_AftDBCnxCha; // RFP!
 
         /// <summary>
         /// Private constructor for DBManager. <br />
