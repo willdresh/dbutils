@@ -4,7 +4,7 @@ using System.Data;
 
 namespace DBInterface
 {
-    public delegate IDbConnection DBConnectionProvider(DeltaDBConnectionArgs args);
+    public delegate IDbConnection DBConnectionProvider();
 
     [Flags]
     public enum DBConnectionPolicy
@@ -88,7 +88,7 @@ namespace DBInterface
             IDbConnection conn;
             try
             {
-                conn = cnxProvider(new DeltaDBConnectionArgs());
+                conn = cnxProvider();
                 if (conn == null) throw new NoNullAllowedException("in DBManagerManager.cs:78 - cnxProvider function returned null");
             } catch (Exception ex) { throw new InvalidDBConnectionProvider("in DBManager.cs:79 DBManager::DBManager(...)", ex); }
 
@@ -134,12 +134,13 @@ namespace DBInterface
         // set to public for testing purposes
         public void NextConnection()
         {
-            IDbConnection oldCnx = lookupMgr.connection,
-                newCnx = cnxProvider(new DeltaDBConnectionArgs());
+            IDbConnection oldCnx = lookupMgr.connection;
+            IDbConnection newCnx = cnxProvider();
+            var args = new DeltaDBConnectionArgs(oldCnx, newCnx);
 
-            BeforeDBConnectionChanges.Invoke(oldCnx, newCnx);
+            BeforeDBConnectionChanges.Invoke(args);
             lookupMgr.connection = newCnx;
-            AfterDBConnectionChanged.Invoke(oldCnx, newCnx);
+            AfterDBConnectionChanged.Invoke(args);
         }
 
         public ILookupResult<ILookup> Lookup(ILookup query)

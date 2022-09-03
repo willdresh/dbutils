@@ -24,7 +24,7 @@ namespace DBInterface_XUnit_Tests
             return $"DBInterface_XUnit_Tests::DummyDBConnection (id={auto_id})";
         }
 
-        public static DummyDBConnection Build(ObtainDbConnectionEventArgs ea)
+        public static DummyDBConnection Build()
         {
             return new DummyDBConnection();
         }
