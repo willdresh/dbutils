@@ -28,7 +28,10 @@ namespace DBInterface
     /// </summary>
     public class DBManager: ILookupProvider<ILookup>
     {
-        internal delegate void DbConnectionUpdated(IDbConnection oldCnx, IDbConnection newCnx);
+        // TODO- change to internal for production
+        // currently set to public because I'm out of time to mess with XUnit getting a hold of
+        //  the internal info it needs
+        public delegate void DbConnectionUpdated(IDbConnection oldCnx, IDbConnection newCnx);
 
         internal class InvalidDBConnectionProvider: ExternalIntegrationException
         {
@@ -50,8 +53,10 @@ namespace DBInterface
         private bool cnxUsed;
 
 
-        internal event DbConnectionUpdated BeforeDBConnectionChanges;
-        internal event DbConnectionUpdated AfterDBConnectionChanged;
+        // TODO - change to internal for production
+        // (currently set to public for testing purposes - this is not safe for deployment)
+        public event DbConnectionUpdated BeforeDBConnectionChanges;
+        public event DbConnectionUpdated AfterDBConnectionChanged;
 
         /// <summary>
         /// Private constructor for DBManager. <br />
