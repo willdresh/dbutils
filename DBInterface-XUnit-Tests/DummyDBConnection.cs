@@ -21,7 +21,7 @@ namespace DBInterface_XUnit_Tests
 
         public override string ToString()
         {
-            return $"DBInterface_XUnit_Tests::DummyDBConnection (id={auto_id})";
+            return $"DBInterface_XUnit_Tests::DummyDBConnection (id={auto_id}, TestBit={(TestBit.HasValue ? TestBit.GetValueOrDefault() : "null")} ) ({base.ToString()})";
         }
 
         public static DummyDBConnection Build()
