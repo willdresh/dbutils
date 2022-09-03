@@ -6,7 +6,7 @@ namespace DBInterface_XUnit_Tests
     /// <summary>
     /// Dummy provider of IDbConnection. Its interface members throw NotImplementedExceptions.
     /// </summary>
-    internal class DummyDBConnection: IDbConnection, DBInterface.XUnit.ITestElement
+    internal class DummyDBConnection : IDbConnection
     {
         private static UInt16 auto_id_source = 1;
         private int auto_id;

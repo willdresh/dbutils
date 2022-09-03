@@ -105,6 +105,7 @@ namespace DBInterface
                 // For production, just delete the following line and have empty braces for the function body of the lambda
                 XUnit_AftDBCnxCha.Invoke(a); // RFP!
             });
+
             BeforeDBConnectionChanges += ((a) =>
             {
                 // Automatically invoke our test event whenever our normal event is invoked
