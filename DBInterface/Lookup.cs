@@ -240,7 +240,9 @@ namespace DBInterface
         }
     }
 
-    internal class LookupResult: ILookupResult<ILookup>
+    public class LookupResult: ILookupResult<ILookup>
+        // TODO - change this to internal for production
+        // was made public for testing purposes
     {
         internal LookupResult(ILookup _query, System.Object _result)
         {

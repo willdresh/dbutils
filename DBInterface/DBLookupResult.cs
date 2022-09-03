@@ -10,7 +10,9 @@ namespace DBInterface
     /// <remarks>
     /// This class cannot be externally inherited, as it has no public constructors.
     /// </remarks>
-    internal partial class DBLookupResult : LookupResult, ILookupResult<DBLookupBase>
+    public partial class DBLookupResult : LookupResult, ILookupResult<DBLookupBase>
+        // TODO - change this to internal for release!
+        // was made public for testing
     {
         internal DBLookupResult(DBLookupBase query, object response)
             : base(query, response)

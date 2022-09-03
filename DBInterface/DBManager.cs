@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Data;
 
+using TestDummy = DBInterface_XUnit_tests.DummyDBConnection;
+
 namespace DBInterface
 {
     public delegate IDbConnection DBConnectionProvider(ObtainDbConnectionEventArgs args);
@@ -75,8 +77,8 @@ namespace DBInterface
             try
             {
                 conn = cnxProvider(invariant_args);
-                if (conn == null) throw new NoNullAllowedException();
-            } catch (Exception ex) { throw new InvalidDBConnectionProvider("in DBManager.cs: DBManager::DBManager(...)", ex); }
+                if (conn == null) throw new NoNullAllowedException("in DBManagerManager.cs:78 - cnxProvider function returned null");
+            } catch (Exception ex) { throw new InvalidDBConnectionProvider("in DBManager.cs:79 DBManager::DBManager(...)", ex); }
 
             lookupMgr = new DBLookupManager(conn);
         }
@@ -88,7 +90,7 @@ namespace DBInterface
         /// <param name="cnx_Provider"></param>
         /// <exception cref="ArgumentNullException"><c>cnx_Provider</c> is <c>null</c>.</exception>
         /// <exception cref="NoNullAllowedException">The supplied cnx_Provider function returned null</exception>
-        /// <exception cref="InvalidDbConnectionProvider">The supplied cnx_Provider function threw an exception</exception>
+        /// <exception cref="InvalidDBConnectionProvider">The supplied cnx_Provider function threw an exception</exception>
         public static DBManager Build(DBConnectionProvider cnx_Provider, DBConnectionPolicy policy = DEFAULT_Connection_Policy)
         {
             if (cnx_Provider == null)
@@ -96,7 +98,16 @@ namespace DBInterface
             return new DBManager(cnx_Provider, policy);
         }
 
-        private void NextConnection()
+        public static DBManager Build_For_TestDummy(TestDummy dummy, DBConnectionProvider cnx_Provider, DBConnectionPolicy policy = DEFAULT_Connection_Policy)
+        {
+
+
+            return Build(cnx_Provider, policy);
+        }
+
+        // TODO - should this really be public? Unsure
+        // set to public for testing purposes
+        public void NextConnection()
         {
             IDbConnection oldCnx = lookupMgr.connection,
                 newCnx = cnxProvider(new ObtainDbConnectionEventArgs());
