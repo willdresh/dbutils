@@ -30,10 +30,18 @@ namespace DBInterface
     /// </summary>
     public class DBManager: ILookupProvider<ILookup>
     {
-        // TODO- change to internal for production
-        // currently set to public because I'm out of time to mess with XUnit getting a hold of
-        //  the internal info it needs
-        public delegate void DbConnectionUpdated(IDbConnection oldCnx, IDbConnection newCnx);
+        internal delegate void DbConnectionUpdated(IDbConnection oldCnx, IDbConnection newCnx);
+
+
+        #region Test members - remove for production
+
+        public delegate IDbConnection DbConnectionUpdated_For_XUnit(IDbConnection oldCnx, IDbConnection newCnx);
+
+        public static IDbConnection GetNewCnx_For_XUnit(IDbConnection oldCnx, IDbConnection newCnx)
+        {
+            return newCnx;
+        }
+        #endregion
 
         internal class InvalidDBConnectionProvider: ExternalIntegrationException
         {

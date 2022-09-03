@@ -35,11 +35,6 @@ namespace DBInterface_XUnit_Tests
             catch (DBInterfaceFatalException ex) { throw new ApplicationException("from DBManagerTests::static DBManagerTests()", ex); }
         }
 
-        internal class Test_Wrapper_DBManager
-        {
-
-        }
-
         public class Events
         {
 
