@@ -66,6 +66,7 @@
     <Compile Include="CacheDB\MutableCacheDBLookup.cs" />
     <Compile Include="MutableDBLookup_Equality.cs" />
     <Compile Include="MutableDBLookup_ImmutableCopies.cs" />
+    <Compile Include="Testing\DBManager_Testing.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\.editorconfig">
