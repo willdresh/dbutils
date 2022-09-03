@@ -23,7 +23,8 @@ namespace DBInterface
 
     /// <summary>
     /// DBManager. This class cannot be externally inherited, as it has
-    /// no public/protected constructors.
+    /// private-only construction. Note that building a DBManager
+    /// always has a chance to throw exceptions (see <see cref="DBManager.Build(DBConnectionProvider, DBConnectionPolicy)"/>).
     /// </summary>
     public class DBManager: ILookupProvider<ILookup>
     {
@@ -47,7 +48,7 @@ namespace DBInterface
         private DBConnectionProvider cnxProvider;
         private DBLookupManager lookupMgr;
         private bool cnxUsed;
-;
+
 
         internal event DbConnectionUpdated BeforeDBConnectionChanges;
         internal event DbConnectionUpdated AfterDBConnectionChanged;
