@@ -4,7 +4,12 @@ VisualStudioVersion = 17.3.32825.248
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DBInterface", "DBInterface\DBInterface.csproj", "{3DB76A99-D19F-4207-BD0D-D5114C0C8853}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DBInterface-XUnit-Tests", "DBInterface-XUnit-Tests\DBInterface-XUnit-Tests.csproj", "{4923A0FE-9460-4A22-99F9-528831AD488C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DBInterface-XUnit-Tests", "DBInterface-XUnit-Tests\DBInterface-XUnit-Tests.csproj", "{4923A0FE-9460-4A22-99F9-528831AD488C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E66BE977-32F2-4EE7-B7E8-1618D87A213D}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

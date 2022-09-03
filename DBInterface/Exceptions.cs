@@ -6,6 +6,28 @@ using static DBInterface.LookupManager;
 
 namespace DBInterface
 {
+    public class DBInterfaceFatalException: Exception
+    {
+        private static readonly string DBIFMessage = "Fatal Exception (DBInterface)";
+        internal DBInterfaceFatalException()
+            : base(DBIFMessage) { }
+
+        internal DBInterfaceFatalException(string message)
+            : base(GenerateMessage(message)) { }
+
+        internal DBInterfaceFatalException(string message, Exception innerException)
+            : base(GenerateMessage(message), innerException) { }
+
+        internal DBInterfaceFatalException(System.Runtime.Serialization.SerializationInfo info,
+                System.Runtime.Serialization.StreamingContext context)
+            : base(info, context) { }
+
+        private static string GenerateMessage(string msg)
+        {
+            return String.Format("{0}: {1}", DBIFMessage, msg);
+        }
+    }
+
     /// <summary>
     /// DB Interface application exception. Cannot be externally inherited, as it has
     /// no public constructor.
@@ -32,8 +54,33 @@ namespace DBInterface
         }
     }
 
+    internal class ExternalIntegrationException: DBInterfaceApplicationException
+    {
+
+        private static readonly string DBIMessage = "External Integration Exception";
+
+        internal ExternalIntegrationException()
+            : base(DBIMessage) { }
+
+        internal ExternalIntegrationException(string message)
+            : base(GenerateMessage(message)) { }
+
+        internal ExternalIntegrationException(string message, Exception innerException)
+            : base(GenerateMessage(message), innerException) { }
+
+        internal ExternalIntegrationException(System.Runtime.Serialization.SerializationInfo info,
+                System.Runtime.Serialization.StreamingContext context)
+            : base(info, context) { }
+
+        private static string GenerateMessage(string msg)
+        {
+            return String.Format("{0}: {1}", DBIMessage, msg);
+        }
+    }
+
+    // TODO - Remove this exception class
     /// <summary>
-    /// Operation not permitted exception. Cannot be externally inherited, as it has
+    /// (WILL BE REMOVED SOON) Operation not permitted exception. Cannot be externally inherited, as it has
     /// no public constructor.
     /// </summary>
     public class OperationNotPermittedException : DBInterfaceApplicationException
@@ -155,6 +202,24 @@ namespace DBInterface
 
     partial class DBLookupManager
     {
+        internal sealed class UnexpectedBehaviorException: DBInterfaceFatalException
+        {
+            private static readonly string UBEMessage = "Unexpected behavior by a provider of System.Data.IDbConnection";
+
+            public UnexpectedBehaviorException()
+                : base(UBEMessage)
+            { }
+
+            public UnexpectedBehaviorException(string msg)
+                :base(GenerateMessage(msg))
+            { }
+
+            private static string GenerateMessage(string msg)
+            {
+                return String.Format("{0}: {1}", UBEMessage, msg);
+            }
+        }
+
         internal sealed class DBLookupManagerBugDetectedException : ArgumentNullException
         {
             private static readonly string FBDEMessage = "A required argument was null in a call to a static internal method of DBLookupManager; this probably means a bug in the caller's code";

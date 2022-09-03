@@ -15,7 +15,9 @@ namespace DBInterface
     /// DB Lookup. This class cannot be externally inherited, as it has no
     /// public constructors.
     /// </summary>
-    internal partial class DBLookup: DBLookupBase
+    public partial class DBLookup: DBLookupBase
+        // TODO - change to internal access for production
+        // changed to public for testing purposes
     {
         private System.Data.IDbConnection cnx;
         internal override IDbConnection DBConnection { get => cnx; set => cnx = value; }

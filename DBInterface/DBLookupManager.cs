@@ -8,20 +8,6 @@ namespace DBInterface
 {
     public partial class DBLookupManager: LookupManager
     {
-
-        [Flags]
-        public enum DBConnectionPolicy
-        {
-            AUTO_CONNECT = 1,
-            AUTO_DISCONNECT_ALL = 2,
-            AUTO_DISCONNECT_WHEN_AUTOCONNECTED = 4,
-
-            /// <summary>
-            /// Functionality not yet implemented
-            /// </summary>
-            AUTO_REFRESH = 8
-        }
-
         public const DBConnectionPolicy DEFAULT_Connection_Policy =
             DBConnectionPolicy.AUTO_CONNECT
             | DBConnectionPolicy.AUTO_DISCONNECT_WHEN_AUTOCONNECTED;
@@ -47,26 +33,47 @@ namespace DBInterface
             ConnectionPolicy = policy;
         }
 
+        /// <exception cref="DBInterfaceApplicationException" />
         private void ExecuteAutoDisconnect()
         {
-            connection.Close();
+            try {
+                connection.Close();
+            }
+            catch (Exception ex)
+            { throw new DBInterfaceApplicationException("An error occurred while trying to auto-disconnect", ex); }
         }
 
+        /// <exception cref="DBInterfaceApplicationException" />
         private void ExecuteAutoConnect()
         {
-            connection.Open();
+            try {
+                connection.Open();
+            } catch (Exception ex)
+            { throw new DBInterfaceApplicationException("An error occurred while trying to auto-connect", ex); }
         }
 
+
+        /// <exception cref="ArgumentNullException" />
         private DBLookup BuildLookup(ILookup query)
         {
+            if (query == null)
+                throw new ArgumentNullException(nameof(query));
+
             return new DBLookup(query.KeyCopy, connection);
         }
 
+
+        /// <exception cref="ArgumentNullException" />
         public DBLookupBase BuildLookupBase(ILookup query)
         {
+            if (query == null)
+                throw new ArgumentNullException(nameof(query));
+
             return BuildLookup(query);
         }
 
+
+        /// <exception cref="ArgumentNullException" />
         internal DBLookupResult BuildFailureInstance_Internal(DBLookupBase query)
         {
             if (query == null)
@@ -83,9 +90,30 @@ namespace DBInterface
         /// </summary>
         /// <returns>The lookup.</returns>
         /// <param name="query">Query.</param>
-        /// <exception cref="InternalInstanceExpectedException"></exception>
-        internal DBLookupResult DatabaseLookup(DBLookup query)
+        /// <exception cref="ArgumentNullException" />
+        /// <exception cref="InternalInstanceExpectedException">
+        /// Tried to use a custom externally-defined provider of <see cref="ILookupProvider{DBLookupBase}"/>
+        /// (this behavior is not yet supported, but may be in future versions)
+        /// </exception>
+        /// <exception cref="DBInterfaceApplicationException">
+        /// The <c>System.Data.IDbConnection</c> threw an exception while
+        /// trying to auto-disconnect
+        /// </exception>
+        /// <exception cref="DataUnreachableException">
+        /// The <c>System.Data.IDbConnection</c> threw an exception while
+        /// trying to auto-connect
+        /// </exception>
+        /// <exception cref="UnexpectedBehaviorException">
+        /// The <c>System.Data.IDbConnection</c> was successfully connected,
+        /// but had improper/unexpected <c>ConnectionState</c> flags.
+        /// </exception>
+        public DBLookupResult DatabaseLookup(DBLookup query)
+            //TODO - change to internal or MAYBE protected internal.
+            //was changed to public for unit testing
         {
+            if (query == null)
+                throw new ArgumentNullException(nameof(query));
+
             DBLookupResult result;
             // FIRST: ready our database connection
             bool finallyCloseConnection = ConnectionPolicy.HasFlag(DBConnectionPolicy.AUTO_DISCONNECT_ALL);
@@ -93,13 +121,24 @@ namespace DBInterface
             {
                 if (ConnectionPolicy.HasFlag(DBConnectionPolicy.AUTO_CONNECT))
                 {
-                    ExecuteAutoConnect();
+                    try { ExecuteAutoConnect(); }
+                    catch (DBInterfaceApplicationException ex) { throw new DataUnreachableException("Unable to obtain connection for lookup", ex); }
                     finallyCloseConnection = finallyCloseConnection
                         || ConnectionPolicy.HasFlag(DBConnectionPolicy.AUTO_DISCONNECT_WHEN_AUTOCONNECTED);
                 }
+
+                // If policy prohibits auto-connect, and we are not already connected,
+                // then return a failure result
                 else result = BuildFailureInstance_Internal(query);
-                //else throw new PolicyProhibitsAutoConnectException(); //Deprecated
             }
+
+
+            // Our connection is now open
+
+            if (ConnectionState.HasFlag(ConnectionState.Broken)
+                || ConnectionState.HasFlag(ConnectionState.Closed)
+                || !ConnectionState.HasFlag(ConnectionState.Open))
+                throw new UnexpectedBehaviorException("Invalid connection state (this is most likely caused by an external provider of System.Data.IDbConnection misbehaving)");
 
             try
             {
@@ -116,7 +155,11 @@ namespace DBInterface
                     else throw new InternalInstanceExpectedException("Runtime type returned by DBLookupManager.dblp.Lookup(DBLookup) was not an instance of DBLookupResult. This could be because this instance's dblp has an externally-defined type.");
                 }
             }
-            finally { if (finallyCloseConnection) ExecuteAutoDisconnect(); }
+            finally {
+                if (finallyCloseConnection)
+                    try { ExecuteAutoDisconnect(); }
+                    catch (DBInterfaceApplicationException ex) { throw new DBInterfaceApplicationException("A problem occurred while trying to close the connection", ex); }
+            }
 
             return result;
         }
