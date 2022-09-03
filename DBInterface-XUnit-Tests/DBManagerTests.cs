@@ -8,16 +8,18 @@ namespace DBInterface_XUnit_Tests
     public class DBManagerTests
     {
 
-        internal static DbConnectionUpdated default_event_handler = (x, y) => (y as Dummy).testBit = true;
+        internal static DbConnectionUpdated default_event_handler = (x, y) => (y as Dummy).TestBit = true;
         internal static ObtainDbConnectionEventArgs static_args = new ObtainDbConnectionEventArgs();
         internal static DBConnectionProvider static_provider = (x) => Dummy.Build(x);
         internal static DBManager static_instance;
 
         internal static DBManager build_test_mgr(
-            bool bind_BefDBCnx_Changes = false, bool bind_AftDBCnx_Changes = false
+            bool bind_BefDBCnx_Changes = false,
+            bool bind_AftDBCnx_Changes = false
             )
         {
             DBManager result = DBManager.Build(static_provider);
+
             if (bind_BefDBCnx_Changes) result.BeforeDBConnectionChanges += default_event_handler;
             if (bind_AftDBCnx_Changes) result.AfterDBConnectionChanged += default_event_handler;
 
